@@ -1,0 +1,49 @@
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+        # 没有密码，保持简洁
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/mind_ai
+    username: mind_user
+    password: mind123
+  web:
+    resources:
+      static-locations: classpath:/static/
+      add-mappings: true
+
+# MyBatis-Plus配置
+mybatis-plus:
+  configuration:
+    default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  type-enums-package: com.yourname.enumsPack
+
+# 应用配置
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# JWT配置
+jwt:
+  secret: "bWluZC1haS1qd3Qtc2VjcmV0LWtleS0yMDI1LXNwcmluZy1ib290LTMtc2VjdXJpdHktdG9rZW4tbWFuYWdlbWVudC1zeXN0ZW0tYWR2YW5jZWQtdmVyc2lvbg=="
+  expiration: 604800000  # 7天，单位毫秒
+  token-prefix: "Bearer "
+  header: "Authorization"
+
+# 日志配置（可选）
+logging:
+  level:
+    com.yourname: debug
+    org.springframework.web: info

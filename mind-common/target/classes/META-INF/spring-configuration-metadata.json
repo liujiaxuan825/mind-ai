@@ -1,0 +1,32 @@
+{
+  "groups": [
+    {
+      "name": "jwt",
+      "type": "com.yourname.mind.config.JwtProperties",
+      "sourceType": "com.yourname.mind.config.JwtProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "jwt.expiration",
+      "type": "java.lang.Long",
+      "sourceType": "com.yourname.mind.config.JwtProperties"
+    },
+    {
+      "name": "jwt.header",
+      "type": "java.lang.String",
+      "sourceType": "com.yourname.mind.config.JwtProperties"
+    },
+    {
+      "name": "jwt.secret",
+      "type": "java.lang.String",
+      "sourceType": "com.yourname.mind.config.JwtProperties"
+    },
+    {
+      "name": "jwt.token-prefix",
+      "type": "java.lang.String",
+      "sourceType": "com.yourname.mind.config.JwtProperties"
+    }
+  ],
+  "hints": []
+}
