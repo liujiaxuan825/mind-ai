@@ -4,6 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.0</version>
+        <relativePath/>
+    </parent>
 
     <groupId>com.yourname</groupId>
     <artifactId>mind-ai</artifactId>
@@ -14,26 +20,21 @@
     <description>AI-Powered Knowledge Management System</description>
 
     <properties>
+        <jwt.version>0.11.5</jwt.version>
         <java.version>21</java.version>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <!-- Spring Boot -->
+        <!-- 使用与JDK 21兼容的版本 -->
         <spring-boot.version>3.2.0</spring-boot.version>
-        <spring-cloud.version>2023.0.0</spring-cloud.version>
 
         <!-- 数据库 -->
-        <mybatis-plus.version>3.5.4.1</mybatis-plus.version>
-        <mysql.version>8.0.33</mysql.version>
+        <mybatis-plus.version>3.5.7</mybatis-plus.version>
+        <postgresql.version>42.6.0</postgresql.version>
 
         <!-- 工具 -->
         <lombok.version>1.18.30</lombok.version>
-        <fastjson.version>2.0.42</fastjson.version>
-        <jwt.version>0.11.5</jwt.version>
-
-        <!-- 测试 -->
-        <junit.version>5.10.0</junit.version>
     </properties>
 
     <!-- 模块定义 -->
@@ -43,63 +44,11 @@
         <module>mind-file-service</module>
         <module>mind-ai-service</module>
         <module>mind-search-service</module>
-        <module>mind-common</module>
-        <module>mind-file-service</module>
-        <module>mind-user-service</module>
-        <module>mind-ai-service</module>
-        <module>mind-search-service</module>
     </modules>
 
     <!-- 依赖管理 -->
     <dependencyManagement>
         <dependencies>
-            <!-- Spring Boot BOM -->
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring-boot.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
-            <!-- Spring Cloud BOM -->
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
-            <!-- MyBatis Plus -->
-            <dependency>
-                <groupId>com.baomidou</groupId>
-                <artifactId>mybatis-plus-boot-starter</artifactId>
-                <version>${mybatis-plus.version}</version>
-            </dependency>
-
-            <!-- MySQL -->
-            <dependency>
-                <groupId>mysql</groupId>
-                <artifactId>mysql-connector-java</artifactId>
-                <version>${mysql.version}</version>
-            </dependency>
-
-            <!-- Lombok -->
-            <dependency>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok</artifactId>
-                <version>${lombok.version}</version>
-            </dependency>
-
-            <!-- FastJSON -->
-            <dependency>
-                <groupId>com.alibaba.fastjson2</groupId>
-                <artifactId>fastjson2</artifactId>
-                <version>${fastjson.version}</version>
-            </dependency>
-
-            <!-- JWT -->
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt-api</artifactId>
@@ -109,11 +58,49 @@
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt-impl</artifactId>
                 <version>${jwt.version}</version>
+                <scope>runtime</scope>
             </dependency>
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt-jackson</artifactId>
                 <version>${jwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <!-- Spring Boot BOM -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- MyBatis Plus 3.5.7 支持Spring Boot 3.2.0 -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-generator</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+
+            <!-- PostgreSQL 驱动 -->
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.version}</version>
+            </dependency>
+
+            <!-- Lombok -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <optional>true</optional>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -125,6 +112,14 @@
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
                     <version>${spring-boot.version}</version>
+                    <configuration>
+                        <excludes>
+                            <exclude>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                            </exclude>
+                        </excludes>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -134,6 +129,7 @@
                         <source>21</source>
                         <target>21</target>
                         <encoding>UTF-8</encoding>
+                        <parameters>true</parameters>
                     </configuration>
                 </plugin>
             </plugins>
