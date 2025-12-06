@@ -1,0 +1,10 @@
+aliyun:
+  oss:
+    endpoint: oss-cn-beijing.aliyuncs.com
+    # 访问凭证AccessKey (非常重要！不要泄露)
+    access-key-id: ${OSS_ACCESS_KEY_ID:}
+    access-key-secret: ${OSS_ACCESS_KEY_SECRET:}
+    # 存储桶名称 (你在OSS控制台创建的Bucket名字)
+    bucket-name: liujiaxuan-mind-ai
+    # 自定义配置：文件访问URL的前缀（可选，但推荐）
+    url-prefix: https://${aliyun.oss.bucket-name}.${aliyun.oss.endpoint}/

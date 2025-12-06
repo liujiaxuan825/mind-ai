@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 import com.yourname.enumsPack.UserStatus;
 import lombok.Data;
@@ -16,7 +15,7 @@ import lombok.Data;
  */
 @TableName(value ="mind_user")
 @Data
-public class MindUser {
+public class User {
     /**
      * 
      */
@@ -84,7 +83,7 @@ public class MindUser {
         if (getClass() != that.getClass()) {
             return false;
         }
-        MindUser other = (MindUser) that;
+        User other = (User) that;
         return (this.getId() == null ? other.getId() == null : this.getId().equals(other.getId()))
             && (this.getUsername() == null ? other.getUsername() == null : this.getUsername().equals(other.getUsername()))
             && (this.getPassword() == null ? other.getPassword() == null : this.getPassword().equals(other.getPassword()))

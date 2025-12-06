@@ -3,7 +3,7 @@ package com.yourname.service.impl;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.yourname.domain.dto.UserLoginDTO;
 import com.yourname.domain.dto.UserRegisterDTO;
-import com.yourname.domain.entity.MindUser;
+import com.yourname.domain.entity.User;
 import com.yourname.domain.vo.UserLoginVO;
 import com.yourname.domain.vo.UserVO;
 import com.yourname.enumsPack.UserStatus;
@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -32,7 +31,7 @@ import java.time.LocalDateTime;
 */
 @Service
 @RequiredArgsConstructor
-public class MindUserServiceImpl extends ServiceImpl<MindUserMapper, MindUser> implements MindUserService {
+public class MindUserServiceImpl extends ServiceImpl<MindUserMapper, User> implements MindUserService {
 
     private final JwtUtils jwtUtils;
 
@@ -47,7 +46,7 @@ public class MindUserServiceImpl extends ServiceImpl<MindUserMapper, MindUser> i
             throw new BusinessException("用户名或者密码不能为空！");
         }
         //先查询用户是否存在
-        MindUser user = this.lambdaQuery().eq(MindUser::getUsername, name).one();
+        User user = this.lambdaQuery().eq(User::getUsername, name).one();
         if (user == null) {
             throw new BusinessException("用户不存在！");
         }
@@ -62,7 +61,7 @@ public class MindUserServiceImpl extends ServiceImpl<MindUserMapper, MindUser> i
             throw new BusinessException("密码输入有误！");
         }
         LocalDateTime now = LocalDateTime.now();
-        this.lambdaUpdate().eq(MindUser::getUsername, name).set(MindUser::getLastLoginTime, now).update();
+        this.lambdaUpdate().eq(User::getUsername, name).set(User::getLastLoginTime, now).update();
 
         String token = jwtUtils.generateToken(user.getId(), name);
         UserVO userInfo = new UserVO();
@@ -78,15 +77,15 @@ public class MindUserServiceImpl extends ServiceImpl<MindUserMapper, MindUser> i
         if (!userRegisterDTO.getPassword().equals(userRegisterDTO.getPasswordAgain())) {
             throw new BusinessException("两次输入密码不一致！");
         }
-        MindUser user = this.lambdaQuery().eq(MindUser::getPhone, userRegisterDTO.getPhone()).one();
+        User user = this.lambdaQuery().eq(User::getPhone, userRegisterDTO.getPhone()).one();
         if (user != null) {
             throw new BusinessException("用户已经存在！");
         }
-        MindUser username = this.lambdaQuery().eq(MindUser::getUsername, userRegisterDTO.getUsername()).one();
+        User username = this.lambdaQuery().eq(User::getUsername, userRegisterDTO.getUsername()).one();
         if (username != null) {
             throw new BusinessException("用户名已经存在啦，换一个试试呢~");
         }
-        MindUser mindUser = new MindUser();
+        User mindUser = new User();
         BeanUtils.copyProperties(userRegisterDTO, mindUser);
         String MD5Password = DigestUtils.md5DigestAsHex(userRegisterDTO.getPassword().getBytes(StandardCharsets.UTF_8));
         mindUser.setPassword(MD5Password);
@@ -97,7 +96,7 @@ public class MindUserServiceImpl extends ServiceImpl<MindUserMapper, MindUser> i
     @Override
     public Result<UserVO> getMe() {
         Long userId = UserContextHolder.getCurrentUserId();
-        MindUser user = getById(userId);
+        User user = getById(userId);
         if (user == null) {
             return null;
         }
@@ -123,7 +122,6 @@ public class MindUserServiceImpl extends ServiceImpl<MindUserMapper, MindUser> i
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new BusinessException(e.getMessage());
-            return Result.error("登出失败！");
         }
         return Result.success();
     }

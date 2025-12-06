@@ -4,7 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.yourname.mapper.MindUserMapper">
 
-    <resultMap id="BaseResultMap" type="com.yourname.domain.entity.MindUser">
+    <resultMap id="BaseResultMap" type="com.yourname.domain.entity.User">
             <id property="id" column="id" />
             <result property="username" column="username" />
             <result property="password" column="password" />

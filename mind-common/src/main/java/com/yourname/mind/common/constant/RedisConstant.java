@@ -1,4 +1,4 @@
-package com.yourname.mind.common;
+package com.yourname.mind.common.constant;
 
 
 public class RedisConstant {

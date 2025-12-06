@@ -1,6 +1,6 @@
 package com.yourname.mapper;
 
-import com.yourname.domain.entity.MindUser;
+import com.yourname.domain.entity.User;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
 * @Entity com.yourname.domain.entity.MindUser
 */
 @Mapper
-public interface MindUserMapper extends BaseMapper<MindUser> {
+public interface MindUserMapper extends BaseMapper<User> {
 
 }
 

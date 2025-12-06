@@ -4,7 +4,7 @@ spring:
       host: localhost
       port: 6379
       database: 0
-        # 没有密码，保持简洁
+      # 没有密码，保持简洁
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/mind_ai
@@ -14,7 +14,18 @@ spring:
     resources:
       static-locations: classpath:/static/
       add-mappings: true
+  rabbitmq:
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 2000    # 2秒
+          multiplier: 2.0           # 指数退避：2s, 4s, 8s
+          max-interval: 10000       # 最大间隔10秒
 
+  elasticsearch:
+    uris: http://localhost:19200
 # MyBatis-Plus配置
 mybatis-plus:
   configuration:
@@ -27,26 +38,13 @@ mybatis-plus:
       logic-delete-field: deleted
       logic-delete-value: 1
       logic-not-delete-value: 0
-  type-enums-package: com.yourname.enumsPack
+
 
 # 应用配置
 server:
-  port: 8080
+  port: 8081
   servlet:
     context-path: /api
-
-# JWT配置
-jwt:
-  secret: "bWluZC1haS1qd3Qtc2VjcmV0LWtleS0yMDI1LXNwcmluZy1ib290LTMtc2VjdXJpdHktdG9rZW4tbWFuYWdlbWVudC1zeXN0ZW0tYWR2YW5jZWQtdmVyc2lvbg=="
-  expiration: 604800000  # 7天，单位毫秒
-  token-prefix: "Bearer "
-  header: "Authorization"
-
-# 日志配置（可选）
-logging:
-  level:
-    com.yourname: debug
-    org.springframework.web: info
 aliyun:
   oss:
     endpoint: oss-cn-beijing.aliyuncs.com
@@ -57,4 +55,8 @@ aliyun:
     bucket-name: liujiaxuan-mind-ai
     # 自定义配置：文件访问URL的前缀（可选，但推荐）
     url-prefix: https://${aliyun.oss.bucket-name}.${aliyun.oss.endpoint}/
-
+# 日志配置（可选）
+logging:
+  level:
+    com.yourname: debug
+    org.springframework.web: info

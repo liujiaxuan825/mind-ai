@@ -1,6 +1,6 @@
 package com.yourname.mind.service.impl;
 
-import com.yourname.mind.common.RedisConstant;
+import com.yourname.mind.common.constant.RedisConstant;
 import com.yourname.mind.service.TokenBlacklistService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
