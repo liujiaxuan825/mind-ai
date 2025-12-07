@@ -1,0 +1,50 @@
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      # 没有密码，保持简洁
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/mind_ai
+    username: mind_user
+    password: mind123
+  web:
+    resources:
+      static-locations: classpath:/static/
+      add-mappings: true
+  rabbitmq:
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 2000    # 2秒
+          multiplier: 2.0           # 指数退避：2s, 4s, 8s
+          max-interval: 10000       # 最大间隔10秒
+  elasticsearch:
+    uris: http://localhost:19200
+# MyBatis-Plus配置
+mybatis-plus:
+  configuration:
+    default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+
+# 应用配置
+server:
+  port: 8082
+  servlet:
+    context-path: /api
+logging:
+  level:
+    com.yourname: debug
+    org.springframework.web: info
