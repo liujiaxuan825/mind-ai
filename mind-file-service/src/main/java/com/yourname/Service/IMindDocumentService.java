@@ -25,4 +25,6 @@ public interface IMindDocumentService extends IService<Document> {
     Result<DocumentVO> getDocument(Long docId);
 
     void deleteDocument(Long docId);
+
+     void DocParse(Document documentRecord);
 }

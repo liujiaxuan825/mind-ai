@@ -29,6 +29,14 @@
             <artifactId>mind-common</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.yourname</groupId>
+            <artifactId>mind-file-service</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+
+
+
 
         <!-- Spring Boot Starter Web (包含Spring Boot自动配置) -->
         <dependency>

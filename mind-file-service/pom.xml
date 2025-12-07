@@ -11,7 +11,7 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>mind-user-service</artifactId>
+    <artifactId>mind-file-service</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
@@ -21,6 +21,7 @@
             <artifactId>mind-common</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
+
 
         <!-- Spring Boot Starter Web (包含Spring Boot自动配置) -->
         <dependency>
