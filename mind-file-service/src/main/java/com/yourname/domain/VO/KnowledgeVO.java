@@ -4,6 +4,15 @@ import java.time.LocalDateTime;
 
 @Data
 public class KnowledgeVO {
+
+    /**
+     * 主键id
+     */
+    private Long id;
+
+    /**
+     * 名称
+     */
     private String name;
     /**
      * 知识仓库头像

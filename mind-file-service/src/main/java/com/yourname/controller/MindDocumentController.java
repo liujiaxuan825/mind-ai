@@ -25,7 +25,7 @@ public class MindDocumentController {
     private final IMindDocumentService mindDocumentService;
 
 
-    @PostMapping("/{klId}")
+    @PostMapping("/add/{klId}")
     public Result<String> addDocument(@PathVariable Long klId,
                                     @RequestParam("file") MultipartFile file) {
         return mindDocumentService.addDocument(klId,file);

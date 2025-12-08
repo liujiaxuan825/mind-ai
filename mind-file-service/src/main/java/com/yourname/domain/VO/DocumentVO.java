@@ -1,8 +1,15 @@
 package com.yourname.domain.VO;
 
 import com.yourname.domain.enumsPack.DocumentStatus;
+import lombok.Data;
 
+@Data
 public class DocumentVO {
+
+    /**
+     * 唯一id
+     */
+    private Long id;
 
     /**
      * 文件名
@@ -22,6 +29,6 @@ public class DocumentVO {
     /**
      * 摘要，状态正确展示内容的一部分，错误是显示错误信息，其他状态不展示
      */
-    private String contentText;
+    private String content;
 
 }

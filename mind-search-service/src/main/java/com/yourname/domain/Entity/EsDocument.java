@@ -26,6 +26,11 @@ public class EsDocument {
     private Long id;
 
     /**
+     * 数据库中文件的id
+     */
+    private Long documentId;
+
+    /**
      *文档标题
      */
     @Field(type = FieldType.Text, analyzer = "ik_pinyin_analyzer", searchAnalyzer = "ik_smart")
@@ -62,7 +67,7 @@ public class EsDocument {
     private LocalDateTime updateTime;
 
     /**
-     *
+     * ai分析出的文章的大纲
      */
     @Field(type = FieldType.Text, analyzer = "ik_smart")
     private String summary;
