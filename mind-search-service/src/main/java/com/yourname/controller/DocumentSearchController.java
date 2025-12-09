@@ -1,7 +1,9 @@
 package com.yourname.controller;
 
 import com.yourname.Service.IDocumentSearchService;
+import com.yourname.domain.DTO.DocSearchDTO;
 import com.yourname.domain.DTO.GlobalSearchDTO;
+import com.yourname.domain.VO.EsDocumentSearchVO;
 import com.yourname.domain.VO.GlobalSearchResultVO;
 import com.yourname.mind.common.Result;
 import com.yourname.mind.common.page.PageRequestDTO;
@@ -34,7 +36,15 @@ public class DocumentSearchController {
     }
 
 
-    /*@GetMapping("/knowledge/{knowledgeId}")
-    public Result<>*/
+    /**
+     * 单个知识库对文档搜索
+     * @param dto
+     * @param page
+     * @return
+     */
+    @GetMapping("/document/page")
+    public Result<PageResultVO<EsDocumentSearchVO>> docSearch(@RequestBody DocSearchDTO dto, @RequestBody PageRequestDTO page){
+        return documentSearchService.docSearch(dto,page);
+    }
 
 }
