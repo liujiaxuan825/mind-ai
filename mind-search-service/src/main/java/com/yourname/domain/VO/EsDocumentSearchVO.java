@@ -11,6 +11,7 @@ public class EsDocumentSearchVO {
     /**
      * es文档基础类
      */
+
     private EsDocumentVO esDocumentVO;
 
     /**
@@ -27,6 +28,7 @@ public class EsDocumentSearchVO {
      * 高亮片段列表
      */
     private List<String> highlightContent;
+
 
     /**
      * 用于实现滑动分页的游标标识
