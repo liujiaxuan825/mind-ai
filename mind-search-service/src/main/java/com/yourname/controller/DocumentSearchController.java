@@ -3,6 +3,7 @@ package com.yourname.controller;
 import com.yourname.Service.IDocumentSearchService;
 import com.yourname.domain.DTO.DocSearchDTO;
 import com.yourname.domain.DTO.GlobalSearchDTO;
+import com.yourname.domain.DTO.SingleSearchDTO;
 import com.yourname.domain.VO.EsDocumentSearchVO;
 import com.yourname.domain.VO.GlobalSearchResultVO;
 import com.yourname.mind.common.Result;
@@ -35,7 +36,6 @@ public class DocumentSearchController {
         return documentSearchService.search(dto,page);
     }
 
-
     /**
      * 单个知识库对文档搜索
      * @param dto
@@ -45,6 +45,16 @@ public class DocumentSearchController {
     @GetMapping("/document/page")
     public Result<PageResultVO<EsDocumentSearchVO>> docSearch(@RequestBody DocSearchDTO dto, @RequestBody PageRequestDTO page){
         return documentSearchService.docSearch(dto,page);
+    }
+
+    /**
+     * 单个文档的检索
+     * @param dto
+     * @return
+     */
+    @GetMapping("/single/{documentId}")
+    public Result<EsDocumentSearchVO> singleSearch(@RequestBody SingleSearchDTO dto){
+        return documentSearchService.singleSearch(dto);
     }
 
 }

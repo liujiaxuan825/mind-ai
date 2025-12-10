@@ -13,10 +13,12 @@ import com.yourname.Service.IMindDocumentService;
 import com.yourname.Service.IMindKnowledgeService;
 import com.yourname.domain.DTO.DocSearchDTO;
 import com.yourname.domain.DTO.GlobalSearchDTO;
+import com.yourname.domain.DTO.SingleSearchDTO;
 import com.yourname.domain.Entity.Document;
 import com.yourname.domain.Entity.EsDocument;
 import com.yourname.domain.Entity.Knowledge;
 import com.yourname.domain.VO.EsDocumentSearchVO;
+import com.yourname.domain.VO.EsDocumentVO;
 import com.yourname.domain.VO.GlobalSearchResultVO;
 import com.yourname.domain.VO.KnowledgeVO;
 import com.yourname.mind.common.Result;
@@ -151,7 +153,47 @@ public class DocumentSearchService implements IDocumentSearchService {
         return Result.success(lastResult);
     }
 
+    @Override
+    public Result<EsDocumentSearchVO> singleSearch(SingleSearchDTO dto) {
+        Long documentId = dto.getDocumentId();
+        String keyWord = dto.getKeyWord();
+        Query query = BoolQuery.of(b -> b.must(TermQuery.of(t -> t.field("documentId").value(documentId))._toQuery())
+                .must(MultiMatchQuery.of(m -> m.fields("content", "title").query(keyWord))._toQuery()))._toQuery();
+        HighlightParameters highlightParameters = HighlightParameters.builder()
+                .withFragmentSize(150)
+                .withNumberOfFragments(0)
+                .build();
+        HighlightFieldParameters title = HighlightFieldParameters.builder()
+                .withFragmentSize(20)
+                .withNumberOfFragments(1)
+                .build();
+        List<HighlightField> list = Arrays.asList(new HighlightField("title",title));
+        Highlight highlight = new Highlight(highlightParameters,list);
+        HighlightQuery highlightQuery = new HighlightQuery(highlight,EsDocument.class);
+        NativeQuery lastQuery = NativeQuery.builder()
+                .withQuery(query)
+                .withHighlightQuery(highlightQuery)
+                .build();
+        SearchHits<EsDocument> searchResult = elasticsearchTemplate.search(lastQuery, EsDocument.class);
+        List<SearchHit<EsDocument>> searchHits = searchResult.getSearchHits();
+        if (searchHits == null || searchHits.isEmpty()) {
+            return Result.success();
+        }
 
+        EsDocumentSearchVO result = new EsDocumentSearchVO();
+        SearchHit<EsDocument> esDocumentSearchHit = searchHits.get(0);
+        EsDocument esDocument = esDocumentSearchHit.getContent();
+        EsDocumentVO esDocumentVO = BeanUtil.copyProperties(esDocument, EsDocumentVO.class);
+        result.setEsDocumentVO(esDocumentVO);
+
+        result.setScore(esDocumentSearchHit.getScore());
+
+        Map<String, List<String>> highlightFields = esDocumentSearchHit.getHighlightFields();
+        result.setHighlightTitle(highlightFields.get("title"));
+        result.setHighlightContent(highlightFields.get("content"));
+
+        return Result.success(result);
+    }
 
 
     private Result<PageResultVO<GlobalSearchResultVO>> manualPagination(List<GlobalSearchResultVO> voList, PageRequestDTO page) {
