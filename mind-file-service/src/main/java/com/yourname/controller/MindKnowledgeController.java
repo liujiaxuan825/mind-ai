@@ -33,9 +33,8 @@ public class MindKnowledgeController {
     }
 
     @PostMapping("/page")
-    public Result<PageResultVO<KnowledgeVO>> pageKnowledge(@RequestBody KnowledgeDTO knowledgeDTO,
-                                                           PageRequestDTO pageDTO){
-        return mindKnowledgeService.pageSelect(knowledgeDTO,pageDTO);
+    public Result<PageResultVO<KnowledgeVO>> pageKnowledge(@RequestBody PageRequestDTO pageDTO){
+        return mindKnowledgeService.pageSelect(pageDTO);
     }
 
     @DeleteMapping("/kbId")

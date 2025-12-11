@@ -22,7 +22,7 @@ public interface IMindKnowledgeService extends IService<Knowledge> {
 
     void addKnowledge(KnowledgeDTO knowledgeAddDTO);
 
-    Result<PageResultVO<KnowledgeVO>> pageSelect(KnowledgeDTO knowledgeDTO,PageRequestDTO pageDTO);
+    Result<PageResultVO<KnowledgeVO>> pageSelect(PageRequestDTO pageDTO);
 
     void deleteKnowledge(List<Long> kbId);
 

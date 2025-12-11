@@ -13,14 +13,14 @@ import java.util.List;
 public class PageRequestDTO {
     
     private Integer pageNum = 1;
-    private Integer pageSize = 10;
+    private Integer pageSize = 6;
     private String sortBy;
 
     public PageRequestDTO() {}
     
     public PageRequestDTO(Integer pageNum, Integer pageSize) {
         this.pageNum = pageNum == null || pageNum < 1 ? 1 : pageNum;
-        this.pageSize = pageSize == null || pageSize < 1 ? 10 : Math.min(pageSize, 1000);
+        this.pageSize = pageSize == null || pageSize < 1 ? 6 : Math.min(pageSize, 1000);
     }
     
     public Integer getOffset() {

@@ -19,6 +19,7 @@ import com.yourname.mind.exception.BusinessException;
 import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +40,7 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
 
     private final IMindDocumentService  mindDocumentService;
 
+
     @Override
     public void addKnowledge(KnowledgeDTO knowledgeDTO) {
         Long userId = UserContextHolder.getCurrentUserId();
@@ -49,9 +51,10 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
     }
 
     @Override
-    public Result<PageResultVO<KnowledgeVO>> pageSelect(KnowledgeDTO knowledgeDTO, PageRequestDTO pageDTO) {
-        LambdaQueryWrapper<Knowledge> lqw = builderWrapper(knowledgeDTO);
-        Page<Knowledge> page = this.page(pageDTO.toMpPage(), lqw);
+    public Result<PageResultVO<KnowledgeVO>> pageSelect(PageRequestDTO pageDTO) {
+
+
+        Page<Knowledge> page = this.page(pageDTO.toMpPage());
         List<KnowledgeVO> voList = page.getRecords().stream().map(item -> BeanUtil.copyProperties(item, KnowledgeVO.class)).collect(Collectors.toList());
         PageResultVO<KnowledgeVO> result = PageResultVO.success(voList, page.getTotal(), pageDTO);
         return Result.success(result);
