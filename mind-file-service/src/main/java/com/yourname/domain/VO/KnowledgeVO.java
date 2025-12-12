@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 
 @Data
 public class KnowledgeVO {
+    /**
+     * id
+     */
     private Long id;
 
     /**

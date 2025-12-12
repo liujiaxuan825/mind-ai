@@ -14,4 +14,8 @@ public interface IKnowledgeCacheService {
     void deleteKnowledge(Long id);
 
     List<KnowledgeVO> getKnowledgeList(List<Long> ids);
+
+    Long knowledgeCountNum();
+
+    Boolean deleteKnowledgeCountNum();
 }

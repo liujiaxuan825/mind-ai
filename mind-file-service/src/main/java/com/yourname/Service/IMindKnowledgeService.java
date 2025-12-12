@@ -27,4 +27,6 @@ public interface IMindKnowledgeService extends IService<Knowledge> {
     void deleteKnowledge(List<Long> kbId);
 
     void updateKnowledge(KnowledgeDTO knowledgeDTO);
+
+    Result<Long> countKnowledgeNum();
 }

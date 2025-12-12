@@ -19,4 +19,9 @@ public class RedisConstant {
 
     public static final String CACHE_NULL_OBJECT = "";
 
+
+
+    public static final String KNOWLEDGE_COUNT_NUM = "knowledge_count_num_userId :";
+
+
 }

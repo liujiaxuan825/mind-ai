@@ -32,7 +32,7 @@ public class MindKnowledgeController {
         return Result.success();
     }
 
-    @PostMapping("/page")
+    @GetMapping("/page")
     public Result<PageResultVO<KnowledgeVO>> pageKnowledge(@RequestBody PageRequestDTO pageDTO){
         return mindKnowledgeService.pageSelect(pageDTO);
     }
@@ -47,6 +47,11 @@ public class MindKnowledgeController {
     public Result<Void> updateKnowledge(@RequestBody KnowledgeDTO knowledgeDTO){
         mindKnowledgeService.updateKnowledge(knowledgeDTO);
         return Result.success();
+    }
+
+    @GetMapping("/count")
+    public Result<Long> countKnowledgeNum(){
+        return mindKnowledgeService.countKnowledgeNum();
     }
 
 }

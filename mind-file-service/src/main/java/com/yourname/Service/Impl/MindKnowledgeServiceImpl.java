@@ -3,6 +3,7 @@ package com.yourname.Service.Impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.yourname.Service.IKnowledgeCacheService;
 import com.yourname.Service.IMindDocumentService;
 import com.yourname.domain.DTO.KnowledgeDTO;
 import com.yourname.domain.Entity.Document;
@@ -12,6 +13,7 @@ import com.yourname.Service.IMindKnowledgeService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.yourname.domain.VO.KnowledgeVO;
 import com.yourname.mind.common.Result;
+import com.yourname.mind.common.constant.RedisConstant;
 import com.yourname.mind.common.page.PageRequestDTO;
 import com.yourname.mind.common.page.PageResultVO;
 import com.yourname.mind.config.UserContextHolder;
@@ -40,6 +42,8 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
 
     private final IMindDocumentService  mindDocumentService;
 
+    private final IKnowledgeCacheService iKnowledgeCacheService;
+
 
     @Override
     public void addKnowledge(KnowledgeDTO knowledgeDTO) {
@@ -47,12 +51,16 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
         Knowledge knowledge = new Knowledge();
         BeanUtils.copyProperties(knowledgeDTO, knowledge);
         knowledge.setUserId(userId);
+
+        //删除知识库数量的缓存
+        iKnowledgeCacheService.deleteKnowledgeCountNum();
+
         this.save(knowledge);
     }
 
     @Override
     public Result<PageResultVO<KnowledgeVO>> pageSelect(PageRequestDTO pageDTO) {
-
+        //TODO:思考这个分页的缓存到底怎么实现
 
         Page<Knowledge> page = this.page(pageDTO.toMpPage());
         List<KnowledgeVO> voList = page.getRecords().stream().map(item -> BeanUtil.copyProperties(item, KnowledgeVO.class)).collect(Collectors.toList());
@@ -73,7 +81,7 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
     @Transactional
     public void deleteKnowledge(List<Long> kbId) {
         LambdaQueryWrapper<Knowledge> knowLqw = new LambdaQueryWrapper<>();
-        knowLqw.in(Knowledge::getUserId, kbId);
+        knowLqw.in(Knowledge::getId, kbId);
         List<Knowledge> list = this.list(knowLqw);
         if(list.isEmpty()){
             throw new BusinessException("知识库不存在！");
@@ -82,14 +90,33 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
         LambdaQueryWrapper<Document> docLqw = new LambdaQueryWrapper<>();
         docLqw.in(Document::getKnowledgeId,kbId);
         mindDocumentService.remove(docLqw);
+
         //删除知识库集合
         this.removeBatchByIds(kbId);
+
+        //删除知识库缓存
+        for (Long id : kbId) {
+            iKnowledgeCacheService.deleteKnowledge(id);
+        }
+        //删除知识库数量缓存
+        iKnowledgeCacheService.deleteKnowledgeCountNum();
+
     }
 
     @Override
+    @Transactional
     public void updateKnowledge(KnowledgeDTO knowledgeDTO) {
-        Long userId = UserContextHolder.getCurrentUserId();
+        Knowledge knowledge = BeanUtil.copyProperties(knowledgeDTO, Knowledge.class);
+        boolean success = updateById(knowledge);
+        if(success){
+            iKnowledgeCacheService.updateKnowledge(knowledge);
+        }
+    }
 
+    @Override
+    public Result<Long> countKnowledgeNum() {
+        Long countNum = iKnowledgeCacheService.knowledgeCountNum();
+        return Result.success(countNum);
     }
 
 }
