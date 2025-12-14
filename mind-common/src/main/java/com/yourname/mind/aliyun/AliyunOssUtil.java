@@ -1,6 +1,8 @@
 package com.yourname.mind.aliyun;
 
+import com.aliyun.oss.ClientException;
 import com.aliyun.oss.OSS;
+import com.aliyun.oss.OSSException;
 import com.aliyun.oss.model.ObjectMetadata;
 import com.aliyun.oss.model.PutObjectRequest;
 import lombok.RequiredArgsConstructor;
@@ -72,7 +74,6 @@ public class AliyunOssUtil {
             throw new IllegalArgumentException("对象名不能为空");
         }
 
-        // 创建OSSClient实例
 
         try (InputStream inputStream = file.getInputStream()) {
             // 创建上传请求
@@ -84,7 +85,7 @@ public class AliyunOssUtil {
             // 返回文件的访问URL
             return generateFileUrl(objectName);
 
-        } catch (IOException e) {
+        } catch (OSSException | ClientException | IOException e) {
             throw new RuntimeException("文件上传失败: " + e.getMessage(), e);
         } finally {
             // 关闭OSSClient

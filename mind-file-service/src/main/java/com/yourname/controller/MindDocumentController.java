@@ -25,12 +25,24 @@ public class MindDocumentController {
     private final IMindDocumentService mindDocumentService;
 
 
+    /**
+     * 添加文档
+     * @param klId
+     * @param file
+     * @return
+     */
     @PostMapping("/add/{klId}")
     public Result<String> addDocument(@PathVariable Long klId,
                                     @RequestParam("file") MultipartFile file) {
         return mindDocumentService.addDocument(klId,file);
     }
 
+    /**
+     * 查询指定知识库中的文档
+     * @param page
+     * @param kbId
+     * @return
+     */
     @GetMapping("/list/{kbId}")
     public Result<PageResultVO<DocumentVO>> pageSelectDoc(@RequestBody PageRequestDTO page, @PathVariable Long kbId){
         return mindDocumentService.pageSelect(page,kbId);
@@ -46,10 +58,20 @@ public class MindDocumentController {
         return mindDocumentService.getDocument(docId);
     }
 
+    /**
+     * 删除文档
+     * @param docId
+     * @return
+     */
     @DeleteMapping("/{docId}")
     public Result<Void> deleteDocument(@PathVariable Long docId) {
         mindDocumentService.deleteDocument(docId);
         return Result.success();
+    }
+
+    @GetMapping("/count")
+    public Result<Long> countDocumentNum(){
+        return mindDocumentService.countDocumentNum();
     }
 
 }

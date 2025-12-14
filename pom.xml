@@ -44,6 +44,7 @@
         <module>mind-file-service</module>
         <module>mind-ai-service</module>
         <module>mind-search-service</module>
+        <module>mind-upload-service</module>
     </modules>
 
     <!-- 依赖管理 -->

@@ -1,8 +1,11 @@
 package com.yourname.Service.Impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.lang.TypeReference;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.yourname.Service.IDocumentCacheService;
 import com.yourname.Service.IKnowledgeCacheService;
 import com.yourname.Service.IMindDocumentService;
 import com.yourname.domain.DTO.KnowledgeDTO;
@@ -44,6 +47,10 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
 
     private final IKnowledgeCacheService iKnowledgeCacheService;
 
+    private final IDocumentCacheService iDocumentCacheService;
+
+    private final StringRedisTemplate stringRedisTemplate;
+
 
     @Override
     public void addKnowledge(KnowledgeDTO knowledgeDTO) {
@@ -58,23 +65,35 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
         this.save(knowledge);
     }
 
+    /**
+     * 这个分页的缓存是直接将某一页的缓存直接存入redis中
+     * @param pageDTO
+     * @return
+     */
     @Override
     public Result<PageResultVO<KnowledgeVO>> pageSelect(PageRequestDTO pageDTO) {
-        //TODO:思考这个分页的缓存到底怎么实现
+
+        Long userId = UserContextHolder.getCurrentUserId();
+        String key = RedisConstant.KNOWLEDGE_PAGE + userId + pageDTO.getPageNum() + pageDTO.getPageSize();
+        String json = stringRedisTemplate.opsForValue().get(key);
+        if(StringUtils.isNotBlank(json)){
+            PageResultVO<KnowledgeVO> result = JSONUtil.toBean(json,
+                    new TypeReference<PageResultVO<KnowledgeVO>>() {},
+                    false);
+            return Result.success(result);
+        }
+
 
         Page<Knowledge> page = this.page(pageDTO.toMpPage());
-        List<KnowledgeVO> voList = page.getRecords().stream().map(item -> BeanUtil.copyProperties(item, KnowledgeVO.class)).collect(Collectors.toList());
-        PageResultVO<KnowledgeVO> result = PageResultVO.success(voList, page.getTotal(), pageDTO);
+        List<Long> ids = page.getRecords().stream().map(Knowledge::getId).toList();
+        List<KnowledgeVO> knowledgeList = iKnowledgeCacheService.getKnowledgeList(ids);
+        PageResultVO<KnowledgeVO> result = PageResultVO.success(knowledgeList, page.getTotal(), pageDTO);
+
+        //缓存此次分页结果
+        stringRedisTemplate.opsForValue().set(key,JSONUtil.toJsonStr(knowledgeList),RedisConstant.KNOWLEDGE_PAGE_TTL);
         return Result.success(result);
     }
 
-    private LambdaQueryWrapper<Knowledge> builderWrapper(KnowledgeDTO dto) {
-        LambdaQueryWrapper<Knowledge> lqw = new LambdaQueryWrapper<>();
-        lqw.eq(Knowledge::getUserId, UserContextHolder.getCurrentUserId());
-        lqw.like(StringUtils.isNotBlank(dto.getName()),Knowledge::getName,dto.getName());
-        lqw.eq(StringUtils.isNotBlank(dto.getFilter()),Knowledge::getFilter,dto.getFilter());
-        return lqw;
-    }
 
 
     @Override
@@ -101,6 +120,8 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
         //删除知识库数量缓存
         iKnowledgeCacheService.deleteKnowledgeCountNum();
 
+        //删除文档相关缓存
+        iDocumentCacheService.deleteCountNum();
     }
 
     @Override

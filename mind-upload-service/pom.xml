@@ -1,21 +1,25 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <parent>
         <groupId>com.yourname</groupId>
         <artifactId>mind-ai</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>mind-file-service</artifactId>
+
+
+    <artifactId>mind-upload-service</artifactId>
     <packaging>jar</packaging>
 
+    <name>mind-upload-service</name>
+    <url>http://maven.apache.org</url>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
     <dependencies>
-        <!-- 引入common模块 -->
         <dependency>
             <groupId>com.yourname</groupId>
             <artifactId>mind-common</artifactId>
@@ -24,9 +28,10 @@
 
         <dependency>
             <groupId>com.yourname</groupId>
-            <artifactId>mind-upload-service</artifactId>
+            <artifactId>mind-file-service</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
+
 
 
         <!-- Spring Boot Starter Web (包含Spring Boot自动配置) -->
@@ -116,19 +121,5 @@
             <version>2.0.29</version>
         </dependency>
 
-
     </dependencies>
-
-    <build>
-        <plugins>
-            <!-- Spring Boot Maven 插件 -->
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <mainClass>com.yourname.UserApplication</mainClass>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 </project>
