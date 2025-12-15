@@ -1,9 +1,12 @@
 package com.yourname.service.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.yourname.Service.IDocumentSearchService;
 import com.yourname.domain.Entity.Document;
 import com.yourname.domain.enumsPack.DocumentStatus;
+import com.yourname.mapper.MindDocumentMapper;
 import com.yourname.mind.aliyun.AliyunOssUtil;
+import com.yourname.mind.exception.BusinessException;
 import com.yourname.service.IParseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +14,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,8 +34,16 @@ public class ParseServiceImpl implements IParseService {
 
     private final Tika tika;
 
+    private final MindDocumentMapper mindDocumentMapper;
+
+    private final IDocumentSearchService iDocumentSearchService;
+
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void DocParse(Document documentRecord) {
+        //更新文档状态为解析中
+        updateDocumentStatus(documentRecord,DocumentStatus.PARSING,null);
+
         String fileKey = documentRecord.getFileKey();
         Path tempFile = null;
         try {
@@ -50,13 +62,26 @@ public class ParseServiceImpl implements IParseService {
             // 4. 更新数据库（核心逻辑保留）
             updateDocumentContent(documentRecord, content, pageCount);
 
+            // 5. 把数据一同存入es当中,为全文检索做准备
+            iDocumentSearchService.saveDocToEs(documentRecord,content,pageCount);
+
         } catch (Exception e) {
-            log.error("文档解析失败，文档ID: {}", documentRecord.getId(), e);
-            // updateDocumentStatus(documentRecord, DocumentStatus.FAILED, e.getMessage());
+            log.error("文档解析/es写入失败，文档ID: {}", documentRecord.getId(), e);
+            updateDocumentStatus(documentRecord, DocumentStatus.FAILED, e.getMessage());
+            throw new BusinessException("文档解析/es写入失败!");
         } finally {
             // 5. 简化的临时文件清理（单次重试，砍掉锁定检查）
             cleanupTempFileSimple(tempFile);
         }
+    }
+
+    private void updateDocumentStatus(Document documentRecord, DocumentStatus status, String msg){
+        LambdaUpdateWrapper<Document> luw = new LambdaUpdateWrapper<>();
+        luw.set(Document::getStatus,status);
+        if(!msg.isEmpty()){
+            luw.set(Document::getParseErrorMessage,msg);
+        }
+        mindDocumentMapper.update(documentRecord,luw);
     }
 
     // ========== 核心简化：文本解析（只保留必要清洗） ==========
@@ -102,18 +127,17 @@ public class ParseServiceImpl implements IParseService {
         return Math.max(1, (int) Math.ceil((double) charCount / 2000));
     }
 
-    // ========== 核心简化：数据库更新（无变化） ==========
+
     private void updateDocumentContent(Document documentRecord, String content, Integer pageCount) {
-        LambdaUpdateWrapper<Document> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.eq(Document::getId, documentRecord.getId())
-                .set(Document::getContentText, content)
+        LambdaUpdateWrapper<Document> luw = new LambdaUpdateWrapper<>();
+        luw.set(Document::getContentText, content)
                 .set(Document::getPageCount, pageCount);
-        // 补充：原代码漏了执行update，这里加上（否则更新不生效）
-        // documentMapper.update(null, updateWrapper);
+        mindDocumentMapper.update(documentRecord,luw);
+
     }
 
-    // ========== 核心简化：临时文件清理（单次重试，无锁定检查） ==========
     private void cleanupTempFileSimple(Path tempFile) {
+        //阿里云工具中清理过一次了,进行一次判断
         if (tempFile == null || !Files.exists(tempFile)) return;
 
         try {

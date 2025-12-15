@@ -32,6 +32,12 @@
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.yourname</groupId>
+            <artifactId>mind-search-service</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+
 
 
         <!-- Spring Boot Starter Web (包含Spring Boot自动配置) -->
@@ -119,6 +125,13 @@
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
             <version>2.0.29</version>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>3.8.1</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>

@@ -2,7 +2,6 @@ package com.yourname.Service.Impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yourname.Service.IDocumentCacheService;
 import com.yourname.domain.Entity.Document;
@@ -11,31 +10,17 @@ import com.yourname.Service.IMindDocumentService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.yourname.domain.VO.DocumentVO;
 import com.yourname.domain.enumsPack.DocumentStatus;
-import com.yourname.mind.aliyun.AliyunOssUtil;
 import com.yourname.mind.common.Result;
 import com.yourname.mind.common.constant.MqConstant;
 import com.yourname.mind.common.page.PageRequestDTO;
 import com.yourname.mind.common.page.PageResultVO;
 import com.yourname.mind.config.UserContextHolder;
-import com.yourname.mind.exception.BusinessException;
 import com.yourname.service.IUploadService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.tika.Tika;
-import org.apache.tika.exception.TikaException;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -55,14 +40,10 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
 
     private final RabbitTemplate rabbitTemplate;
 
-
-
     private final IDocumentCacheService  documentCacheService;
 
     private final IUploadService uploadService;
 
-
-    
 
     @Override
     public Result<String> addDocument(Long klId, MultipartFile file) {
@@ -125,6 +106,7 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
         rabbitTemplate.convertAndSend(MqConstant.EXCHANGE_DOCUMENT_PARSE,MqConstant.ROUT_KEY_DOCUMENT_PARSE,documentRecord);
     }
 
+
     //分析之后封装数据并添加至数据库
     private Document createDocumentRecord(Long klId, MultipartFile file, String fileKey) {
         Document document = new Document();
@@ -139,6 +121,7 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
         this.save(document);
         return document;
     }
+
 
     private String extractFileExtension(String filename) {
         int lastDotIndex = filename.lastIndexOf(".");

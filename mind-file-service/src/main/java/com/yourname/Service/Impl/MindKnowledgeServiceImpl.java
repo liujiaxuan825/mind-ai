@@ -27,9 +27,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 /**
  * <p>
@@ -65,6 +64,7 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
         this.save(knowledge);
     }
 
+
     /**
      * 这个分页的缓存是直接将某一页的缓存直接存入redis中
      * @param pageDTO
@@ -95,7 +95,6 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
     }
 
 
-
     @Override
     @Transactional
     public void deleteKnowledge(List<Long> kbId) {
@@ -124,6 +123,7 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
         iDocumentCacheService.deleteCountNum();
     }
 
+
     @Override
     @Transactional
     public void updateKnowledge(KnowledgeDTO knowledgeDTO) {
@@ -133,6 +133,7 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
             iKnowledgeCacheService.updateKnowledge(knowledge);
         }
     }
+
 
     @Override
     public Result<Long> countKnowledgeNum() {

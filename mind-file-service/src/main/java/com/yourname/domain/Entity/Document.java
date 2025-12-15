@@ -84,8 +84,14 @@ public class Document implements Serializable {
      */
     private Long createdByUserId;
 
+    /**
+     * 创建时间
+     */
     private LocalDateTime createdTime;
 
+    /**
+     * 最后一次更新时间
+     */
     private LocalDateTime updatedTime;
 
 

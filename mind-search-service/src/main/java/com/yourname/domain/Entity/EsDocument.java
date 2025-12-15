@@ -24,11 +24,6 @@ public class EsDocument {
     private Long id;
 
     /**
-     * 数据库中文件的id
-     */
-    private Long documentId;
-
-    /**
      *文档标题
      */
     @Field(type = FieldType.Text, analyzer = "ik_pinyin_analyzer", searchAnalyzer = "ik_smart")

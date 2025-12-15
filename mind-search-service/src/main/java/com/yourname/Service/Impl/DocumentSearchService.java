@@ -9,9 +9,12 @@ import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.yourname.Service.IDocumentSearchService;
 import com.yourname.Service.IMindKnowledgeService;
+import com.yourname.config.DocumentToEsConverter;
+import com.yourname.config.EsDocumentRepository;
 import com.yourname.domain.DTO.DocSearchDTO;
 import com.yourname.domain.DTO.GlobalSearchDTO;
 import com.yourname.domain.DTO.SingleSearchDTO;
+import com.yourname.domain.Entity.Document;
 import com.yourname.domain.Entity.EsDocument;
 import com.yourname.domain.Entity.Knowledge;
 import com.yourname.domain.VO.EsDocumentSearchVO;
@@ -38,9 +41,25 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DocumentSearchService implements IDocumentSearchService {
 
+    private final EsDocumentRepository esDocumentRepository;
+
+    private final DocumentToEsConverter documentToEsConverter;
+
     private final ElasticsearchTemplate elasticsearchTemplate;
 
     private final IMindKnowledgeService knowledgeService;
+
+
+
+    @Override
+    public void saveDocToEs(Document documentRecord, String content, Integer pageCount) {
+        documentRecord.setContentText(content);
+        documentRecord.setPageCount(pageCount);
+        EsDocument esDocument = documentToEsConverter.convertDocumentToEsDocument(documentRecord);
+        esDocumentRepository.save(esDocument);
+    }
+
+
 
     @Override
     public Result<PageResultVO<GlobalSearchResultVO>> search(GlobalSearchDTO dto, PageRequestDTO page) {
@@ -188,6 +207,7 @@ public class DocumentSearchService implements IDocumentSearchService {
 
         return Result.success(result);
     }
+
 
 
     private Result<PageResultVO<GlobalSearchResultVO>> manualPagination(List<GlobalSearchResultVO> voList, PageRequestDTO page) {
