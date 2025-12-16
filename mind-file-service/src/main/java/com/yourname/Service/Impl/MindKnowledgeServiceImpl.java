@@ -19,6 +19,7 @@ import com.yourname.mind.common.Result;
 import com.yourname.mind.common.constant.RedisConstant;
 import com.yourname.mind.common.page.PageRequestDTO;
 import com.yourname.mind.common.page.PageResultVO;
+import com.yourname.mind.config.StringRedisTemplateConfig;
 import com.yourname.mind.config.UserContextHolder;
 import com.yourname.mind.exception.BusinessException;
 import io.micrometer.common.util.StringUtils;
@@ -48,7 +49,7 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
 
     private final IDocumentCacheService iDocumentCacheService;
 
-    private final StringRedisTemplate stringRedisTemplate;
+    private final StringRedisTemplateConfig.RedisCacheUtils redisCacheUtils;
 
 
     @Override
@@ -72,14 +73,14 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
      */
     @Override
     public Result<PageResultVO<KnowledgeVO>> pageSelect(PageRequestDTO pageDTO) {
-
         Long userId = UserContextHolder.getCurrentUserId();
         String key = RedisConstant.KNOWLEDGE_PAGE + userId + pageDTO.getPageNum() + pageDTO.getPageSize();
-        String json = stringRedisTemplate.opsForValue().get(key);
-        if(StringUtils.isNotBlank(json)){
-            PageResultVO<KnowledgeVO> result = JSONUtil.toBean(json,
-                    new TypeReference<PageResultVO<KnowledgeVO>>() {},
-                    false);
+
+        //只能取出集合
+        List<KnowledgeVO> voList = redisCacheUtils.get(key, new TypeReference<List<KnowledgeVO>>() {});
+        if(voList!=null&& !voList.isEmpty()){
+            long total = voList.size();
+            PageResultVO<KnowledgeVO> result = PageResultVO.success(voList, total, pageDTO);
             return Result.success(result);
         }
 
@@ -89,8 +90,8 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
         List<KnowledgeVO> knowledgeList = iKnowledgeCacheService.getKnowledgeList(ids);
         PageResultVO<KnowledgeVO> result = PageResultVO.success(knowledgeList, page.getTotal(), pageDTO);
 
-        //缓存此次分页结果
-        stringRedisTemplate.opsForValue().set(key,JSONUtil.toJsonStr(knowledgeList),RedisConstant.KNOWLEDGE_PAGE_TTL);
+        //缓存此次分页结果,之缓存集合
+        redisCacheUtils.setWithRandomExpire(key, knowledgeList, RedisConstant.KNOWLEDGE_PAGE_TTL);
         return Result.success(result);
     }
 
