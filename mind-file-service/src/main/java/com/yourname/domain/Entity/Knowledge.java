@@ -62,7 +62,6 @@ public class Knowledge implements Serializable {
      * 已经存储的字节数
      */
     private Long storageUsed;
-    
 
     /**
      * 创建时间

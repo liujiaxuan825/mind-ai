@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface IKnowledgeCacheService {
 
-    Knowledge getKnowledgeById(Long id);
+    KnowledgeVO getKnowledgeById(Long id);
 
     void updateKnowledge(Knowledge knowledge);
 
@@ -17,5 +17,5 @@ public interface IKnowledgeCacheService {
 
     Long knowledgeCountNum();
 
-    Boolean deleteKnowledgeCountNum();
+    void deleteKnowledgeCountNum();
 }

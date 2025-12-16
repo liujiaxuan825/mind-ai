@@ -3,8 +3,22 @@ spring:
     redis:
       host: localhost
       port: 6379
+      timeout: 2000ms
       database: 0
       # 没有密码，保持简洁
+      lettuce:
+        pool:
+          max-active: 16        # 连接池最大连接数（CPU核心数*2）
+          max-idle: 8           # 最大空闲连接（保留8个，避免重新创建）
+          min-idle: 2           # 最小空闲连接（至少2个，快速响应）
+          max-wait: 1000ms      # 获取连接的最大等待时间（超时抛异常，避免阻塞）
+    cache:
+      type: redis
+      redis:
+        key-prefix:
+          sk: mind              # 统一缓存前缀（mind）
+        use-key-prefix: true    # 启用前缀
+
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/mind_ai

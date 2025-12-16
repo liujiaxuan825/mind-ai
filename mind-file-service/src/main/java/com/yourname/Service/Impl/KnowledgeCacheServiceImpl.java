@@ -11,6 +11,7 @@ import com.yourname.domain.Entity.Knowledge;
 import com.yourname.domain.VO.KnowledgeVO;
 import com.yourname.mapper.MindKnowledgeMapper;
 import com.yourname.mind.common.constant.RedisConstant;
+import com.yourname.mind.config.StringRedisTemplateConfig;
 import com.yourname.mind.config.UserContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, Knowledge> implements IKnowledgeCacheService {
     
-    private final StringRedisTemplate stringRedisTemplate;
+    private final StringRedisTemplateConfig.RedisCacheUtils redisCacheUtils;
 
     /**
      * 获取单个缓存的过程
@@ -35,28 +36,30 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
      * @return
      */
     @Override
-    public Knowledge getKnowledgeById(Long id) {
-        String key = RedisConstant.KNOWLEDGE_ID+id;
+    public KnowledgeVO getKnowledgeById(Long id) {
+        Long userId = UserContextHolder.getCurrentUserId();
+        String key = RedisConstant.KNOWLEDGE_ID + userId + id;
         try {
-            String knowledge = stringRedisTemplate.opsForValue().get(key);
-            if(StringUtils.isNotBlank(knowledge)){
-                if(RedisConstant.CACHE_NULL_OBJECT.equals(knowledge)){
+            KnowledgeVO knowledgeVO = redisCacheUtils.get(key, KnowledgeVO.class);
+            if(knowledgeVO!=null){
+                if(RedisConstant.CACHE_NULL_OBJECT.equals(knowledgeVO)){
                     return null;
                 }
-                return JSONUtil.toBean(knowledge,Knowledge.class);
+                return knowledgeVO;
             }
             Knowledge know = getById(id);
+            KnowledgeVO vo = BeanUtil.copyProperties(know, KnowledgeVO.class);
             //如果不存在缓存空值，返回null;
             if(know==null){
-                stringRedisTemplate.opsForValue().set(key,RedisConstant.CACHE_NULL_OBJECT,RedisConstant.CACHE_NULL_TTL,TimeUnit.SECONDS);
+                redisCacheUtils.setEmptyValue(key,RedisConstant.CACHE_NULL_TTL);
+                return null;
             }else {
-                String json = JSONUtil.toJsonStr(know);
-                stringRedisTemplate.opsForValue().set(key,json,RedisConstant.KNOWLEDGE_ID_TTL, TimeUnit.SECONDS);
+                redisCacheUtils.setWithRandomExpire(key,vo,RedisConstant.KNOWLEDGE_ID_TTL);
             }
-            return know;
+            return vo;
         } catch (Exception e) {
             log.error("redis缓存失败，{}",e);
-            return getById(id);
+            return BeanUtil.copyProperties(getById(id),KnowledgeVO.class);
         }
     }
 
@@ -66,11 +69,11 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
      */
     @Override
     public void updateKnowledge(Knowledge knowledge) {
-        String key = RedisConstant.KNOWLEDGE_ID+knowledge.getId();
+        Long userId = UserContextHolder.getCurrentUserId();
+        String key = RedisConstant.KNOWLEDGE_ID + userId + knowledge.getId();
         try {
             KnowledgeVO knowledgeVO = BeanUtil.copyProperties(knowledge, KnowledgeVO.class);
-            String json = JSONUtil.toJsonStr(knowledgeVO);
-            stringRedisTemplate.opsForValue().set(key,json,RedisConstant.KNOWLEDGE_ID_TTL,TimeUnit.SECONDS);
+            redisCacheUtils.setWithRandomExpire(key,knowledgeVO,RedisConstant.KNOWLEDGE_ID_TTL);
         } catch (Exception e) {
             log.error("redis更新缓存失败,{}",e);
         }
@@ -82,9 +85,10 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
      */
     @Override
     public void deleteKnowledge(Long id) {
-        String key = RedisConstant.KNOWLEDGE_ID + id;
+        Long userId = UserContextHolder.getCurrentUserId();
+        String key = RedisConstant.KNOWLEDGE_ID + userId + id;
         try {
-            stringRedisTemplate.delete(key);
+            redisCacheUtils.delete(key);
         } catch (Exception e) {
             log.error("redis缓存删除失败，{}",e);
         }
@@ -102,11 +106,10 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
         }
         List<KnowledgeVO> result = new ArrayList<>();
         for (Long id : ids) {
-            Knowledge knowledge = getKnowledgeById(id);
-            if(knowledge==null){
+            KnowledgeVO knowledgeVO = getKnowledgeById(id);
+            if(knowledgeVO==null){
                 continue;
             }
-            KnowledgeVO knowledgeVO = BeanUtil.copyProperties(knowledge, KnowledgeVO.class);
             result.add(knowledgeVO);
         }
         return result;
@@ -117,14 +120,14 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
         Long userId = UserContextHolder.getCurrentUserId();
         String key = RedisConstant.KNOWLEDGE_COUNT_NUM + userId;
         try {
-            String num = stringRedisTemplate.opsForValue().get(key);
-            if (!num.isEmpty()){
-                return Long.getLong(num);
+            Long num = redisCacheUtils.get(key, Long.class);
+            if (num!=null){
+                return num;
             }
             LambdaQueryWrapper<Knowledge> lqw = new LambdaQueryWrapper<>();
             lqw.eq(Knowledge::getUserId,userId);
             long count = count(lqw);
-            stringRedisTemplate.opsForValue().set(key,String.valueOf(count));
+            redisCacheUtils.setWithKeep(key,count);
             return count;
         } catch (Exception e) {
             log.error("redis缓存查询数量失败,{}",e);
@@ -133,10 +136,10 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
     }
 
     @Override
-    public Boolean deleteKnowledgeCountNum() {
+    public void deleteKnowledgeCountNum() {
         Long userId = UserContextHolder.getCurrentUserId();
-        Boolean success = stringRedisTemplate.delete(RedisConstant.KNOWLEDGE_COUNT_NUM + userId);
-        return success;
+        String key = RedisConstant.KNOWLEDGE_COUNT_NUM + userId;
+        redisCacheUtils.delete(key);
     }
 
 

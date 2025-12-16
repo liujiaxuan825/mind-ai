@@ -28,13 +28,15 @@ public class UserController {
         return mindUserService.register(userRegisterDTO);
     }
 
+    @PostMapping("/logout")
+    public Result<Void> userLogout(){
+        return mindUserService.logout();
+    }
+
     @GetMapping("/me")
     public Result<UserVO> getMe() {
         return mindUserService.getMe();
     }
 
-    @PostMapping("/logout")
-    public Result<Void> userLogout(){
-        return mindUserService.logout();
-    }
+
 }
