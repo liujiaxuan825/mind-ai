@@ -10,6 +10,7 @@ import com.yourname.Service.IKnowledgeCacheService;
 import com.yourname.domain.Entity.Knowledge;
 import com.yourname.domain.VO.KnowledgeVO;
 import com.yourname.mapper.MindKnowledgeMapper;
+import com.yourname.mind.aop.CacheMonitor;
 import com.yourname.mind.common.constant.RedisConstant;
 import com.yourname.mind.config.StringRedisTemplateConfig;
 import com.yourname.mind.config.UserContextHolder;
@@ -36,6 +37,7 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
      * @return
      */
     @Override
+    @CacheMonitor(cacheName = "knowledge")
     public KnowledgeVO getKnowledgeById(Long id) {
         Long userId = UserContextHolder.getCurrentUserId();
         String key = RedisConstant.KNOWLEDGE_ID + userId + id;
@@ -116,6 +118,7 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
     }
 
     @Override
+    @CacheMonitor(cacheName = "knowledge")
     public Long knowledgeCountNum() {
         Long userId = UserContextHolder.getCurrentUserId();
         String key = RedisConstant.KNOWLEDGE_COUNT_NUM + userId;

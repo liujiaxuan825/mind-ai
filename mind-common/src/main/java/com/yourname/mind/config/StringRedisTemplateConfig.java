@@ -3,17 +3,23 @@ package com.yourname.mind.config;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.yourname.mind.aop.config.CacheContextHolder;
 import com.yourname.mind.common.constant.RedisConstant;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.RedisConnectionFailureException;
+import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.serializer.SerializationException;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Random;
 
+@Slf4j
 @Configuration
 public class StringRedisTemplateConfig {
 
@@ -71,21 +77,71 @@ public class StringRedisTemplateConfig {
 
 
         public <T> T get(String key, Class<T> clazz) {
-            String json = stringRedisTemplate.opsForValue().get(key);
+            try {
+                String json = stringRedisTemplate.opsForValue().get(key);
 
-            if (StrUtil.isBlank(json) || RedisConstant.CACHE_NULL_OBJECT.equals(json)) {
+                if (!StrUtil.isBlank(json) && !RedisConstant.CACHE_NULL_OBJECT.equals(json)) {
+                    CacheContextHolder.setCacheHit(true);
+                    return JSONUtil.toBean(json, clazz);
+                }
+                if (RedisConstant.CACHE_NULL_OBJECT.equals(json)) {
+                    CacheContextHolder.setCacheNull(true);
+                }else {
+                    CacheContextHolder.setCacheHit(false);
+                }
                 return null;
+            } catch (Exception e) {
+                if (e instanceof RedisConnectionFailureException ||
+                        e instanceof SerializationException ||
+                        e instanceof RedisSystemException) {
+
+                    // 2. 记录缓存异常状态（监控用）
+                    CacheContextHolder.setCacheHit(false); // 异常视为未命中
+                    CacheContextHolder.setCacheNull(false);
+                    CacheContextHolder.setCacheException(true); // 新增：标记缓存异常
+
+                    // 3. 打日志（记录关键信息，便于排查）
+                    log.error("Redis GET操作异常，key={}", key, e);
+
+                    // 4. 返回null（缓存层降级，不影响业务层）
+                    return null;
+                }
             }
-            return JSONUtil.toBean(json, clazz);
+            return null;
         }
 
         public <T> T get(String key, Type type) {
-            String json = stringRedisTemplate.opsForValue().get(key);
-            if (StrUtil.isBlank(json) || "null".equals(json)) {
-                return null;
-            }
+            try {
+                String json = stringRedisTemplate.opsForValue().get(key);
 
-            return JSONUtil.toBean(json,type,false);
+                if (!StrUtil.isBlank(json) && !RedisConstant.CACHE_NULL_OBJECT.equals(json)) {
+                    CacheContextHolder.setCacheHit(true);
+                    return JSONUtil.toBean(json, type, false);
+                }
+                if (RedisConstant.CACHE_NULL_OBJECT.equals(key)) {
+                    CacheContextHolder.setCacheNull(true);
+                }else {
+                    CacheContextHolder.setCacheHit(false);
+                }
+                return null;
+            } catch (Exception e) {
+                if (e instanceof RedisConnectionFailureException ||
+                        e instanceof SerializationException ||
+                        e instanceof RedisSystemException) {
+
+                    // 2. 记录缓存异常状态（监控用）
+                    CacheContextHolder.setCacheHit(false); // 异常视为未命中
+                    CacheContextHolder.setCacheNull(false);
+                    CacheContextHolder.setCacheException(true); // 新增：标记缓存异常
+
+                    // 3. 打日志（记录关键信息，便于排查）
+                    log.error("Redis GET操作异常，key={}", key, e);
+
+                    // 4. 返回null（缓存层降级，不影响业务层）
+                    return null;
+                }
+            }
+            return null;
         }
 
 
