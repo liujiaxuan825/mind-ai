@@ -1,4 +1,4 @@
-package com.yourname.mind.config;
+package com.yourname.mind.aliyun;
 
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClientBuilder;

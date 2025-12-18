@@ -14,7 +14,13 @@
     <artifactId>mind-common</artifactId>
     <packaging>jar</packaging>
 
+
     <dependencies>
+        <dependency>
+            <groupId>com.yourname</groupId>
+            <artifactId>mind-file-service</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
         <!-- Spring Boot 基础依赖 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -130,5 +136,33 @@
             <artifactId>hutool-all</artifactId>
             <version>5.8.22</version> <!-- 最新版即可 -->
         </dependency>
+
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson-spring-boot-starter</artifactId>
+            <version>3.23.3</version>
+        </dependency>
+
+        <!-- Caffeine（本地缓存） -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>3.1.8</version>
+        </dependency>
+
+        <!-- Sentinel（熔断降级） -->
+        <dependency>
+            <groupId>com.alibaba.csp</groupId>
+            <artifactId>sentinel-core</artifactId>
+            <version>1.8.6</version>
+        </dependency>
+
+
+        <!-- Spring Scheduled（定时任务） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-quartz</artifactId>
+        </dependency>
     </dependencies>
+
 </project>

@@ -8,3 +8,8 @@ aliyun:
     bucket-name: liujiaxuan-mind-ai
     # 自定义配置：文件访问URL的前缀（可选，但推荐）
     url-prefix: https://${aliyun.oss.bucket-name}.${aliyun.oss.endpoint}/
+redisson:
+  singleServerConfig:
+    address: redis://${spring.redis.host}:${spring.redis.port}
+    password: ${spring.redis.password}
+    database: ${spring.redis.database}
