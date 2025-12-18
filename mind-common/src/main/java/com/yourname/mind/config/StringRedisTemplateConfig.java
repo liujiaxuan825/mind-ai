@@ -82,9 +82,11 @@ public class StringRedisTemplateConfig {
 
                 if (!StrUtil.isBlank(json) && !RedisConstant.CACHE_NULL_OBJECT.equals(json)) {
                     CacheContextHolder.setCacheHit(true);
+                    CacheContextHolder.setCacheNull(false);
                     return JSONUtil.toBean(json, clazz);
                 }
                 if (RedisConstant.CACHE_NULL_OBJECT.equals(json)) {
+                    CacheContextHolder.setCacheHit(true);
                     CacheContextHolder.setCacheNull(true);
                 }else {
                     CacheContextHolder.setCacheHit(false);
@@ -116,9 +118,11 @@ public class StringRedisTemplateConfig {
 
                 if (!StrUtil.isBlank(json) && !RedisConstant.CACHE_NULL_OBJECT.equals(json)) {
                     CacheContextHolder.setCacheHit(true);
+                    CacheContextHolder.setCacheNull(false);
                     return JSONUtil.toBean(json, type, false);
                 }
                 if (RedisConstant.CACHE_NULL_OBJECT.equals(key)) {
+                    CacheContextHolder.setCacheHit(true);
                     CacheContextHolder.setCacheNull(true);
                 }else {
                     CacheContextHolder.setCacheHit(false);
