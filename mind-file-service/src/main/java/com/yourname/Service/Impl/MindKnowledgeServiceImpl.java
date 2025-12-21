@@ -26,9 +26,12 @@ import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 /**
@@ -140,6 +143,19 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
     public Result<Long> countKnowledgeNum() {
         Long countNum = iKnowledgeCacheService.knowledgeCountNum();
         return Result.success(countNum);
+    }
+
+
+    @Async
+    public void initBloomKnowledgeIds(){
+        LambdaQueryWrapper<Knowledge> lqw = new LambdaQueryWrapper<>();
+        lqw.select(Knowledge::getId);
+        List<Knowledge> list = this.list(lqw);
+        if(list.isEmpty()){
+            return;
+        }
+        Set<Long> knowledgeIds = list.stream().map(Knowledge::getId).collect(Collectors.toSet());
+
     }
 
 }

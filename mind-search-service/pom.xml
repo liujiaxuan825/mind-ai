@@ -34,10 +34,6 @@
             <artifactId>mind-file-service</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
-
-
-
-
         <!-- Spring Boot Starter Web (包含Spring Boot自动配置) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

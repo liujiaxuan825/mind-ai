@@ -3,6 +3,7 @@ package com.yourname;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.springframework.scheduling.annotation.Async;
 
 /**
  * Unit test for simple App.
@@ -35,4 +36,6 @@ public class FileApplicationTest
     {
         assertTrue( true );
     }
+
+
 }

@@ -17,7 +17,7 @@ import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 @RequiredArgsConstructor
 public class ListenDocSave {
 
-    /*private final IMindDocumentService mindDocumentService;
+    private final IMindDocumentService mindDocumentService;
 
     private final EsDocumentRepository esDocumentRepository;
 
@@ -34,5 +34,5 @@ public class ListenDocSave {
         Document document = mindDocumentService.getById(documentId);
         EsDocument esDocument = documentToEsConverter.convertDocumentToEsDocument(document);
         esDocumentRepository.save(esDocument);
-    }*/
+    }
 }

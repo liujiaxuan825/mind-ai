@@ -13,3 +13,14 @@ redisson:
     address: redis://${spring.redis.host}:${spring.redis.port}
     password: ${spring.redis.password}
     database: ${spring.redis.database}
+thread:
+  pool:
+    # 1. 布隆过滤器预热专用线程池
+    bloom:
+      core-size: 5        # 核心线程数（4核8G服务器推荐：CPU核数+1）
+      max-size: 10        # 最大线程数（核心数*2）
+      queue-size: 1000    # 任务队列容量（有界，避免OOM）
+      keep-alive-seconds: 60  # 空闲线程存活时间
+      thread-name-prefix: bloom-  # 线程名前缀（日志排查用）
+      businessAwaitTerminationSeconds: 300
+

@@ -1,13 +1,14 @@
 package com.yourname.mind.Bloom;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.yourname.Service.IMindKnowledgeService;
-import com.yourname.domain.Entity.Knowledge;
+import com.yourname.mind.config.ThreadPoolConfig;
+import com.yourname.mind.infer.BloomDataProvider;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RedissonClient;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -17,16 +18,18 @@ import java.util.List;
 @Slf4j
 public class KnowledgeBloomFilterManager {
 
-    @Resource
-    private RedissonClient redissonClient;
+    @Resource(name = "bloomData")
+    private BloomDataProvider<Long> bloomDataProvider;
 
     @Resource
-    private IMindKnowledgeService iMindKnowledgeService;
+    private RedissonClient redissonClient;
 
     @Resource
     private RBloomFilter<Long> KnowledgeBloomFilter;
 
     private static final String knowledgeBloomKey = "mind-ai:bloom:knowledge:id";
+
+    private volatile boolean warmUpCompleted = false;
 
     @PostConstruct
     public void initKnowledgeBloomFilter(){
@@ -39,10 +42,8 @@ public class KnowledgeBloomFilterManager {
         }
     }
 
-    //加载数据，加载到布隆
 
 
-    //核心判断逻辑
     public boolean isKnowledgeContain(Long id){
         if(id == null){
             return false;
@@ -53,5 +54,29 @@ public class KnowledgeBloomFilterManager {
     //添加逻辑
     public void addKnowledgeToBloom(Long id){
         KnowledgeBloomFilter.add(id);
+    }
+
+    @Async("bloom")
+    public void addAllKnowledgeToBloom() {
+        if(bloomDataProvider==null||warmUpCompleted){
+            log.info("数据已存入或bean为空，无需执行");
+            return;
+        }
+
+        try {
+            List<Long> allKnowIds = bloomDataProvider.getAllKnowIds();
+            if(allKnowIds.isEmpty()){
+                warmUpCompleted = true;
+                log.info("数据为空，无需添加数据");
+            }
+
+            for (Long id : allKnowIds) {
+                addKnowledgeToBloom(id);
+            }
+            warmUpCompleted = true;
+            log.info("成功将指定bloomData Bean的{}条数据存入布隆过滤器", allKnowIds.size());
+        } catch (Exception e) {
+            log.error("将指定bloomData Bean的数据存入布隆过滤器失败", e);
+        }
     }
 }

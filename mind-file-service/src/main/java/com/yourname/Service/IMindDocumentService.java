@@ -27,4 +27,6 @@ public interface IMindDocumentService extends IService<Document> {
     void deleteDocument(Long docId);
 
     Result<Long> countDocumentNum();
+
+    void DocParse(Document documentRecord);
 }

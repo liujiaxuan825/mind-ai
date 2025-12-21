@@ -1,9 +1,8 @@
 package com.yourname.mqListener;
 
+import com.yourname.Service.IMindDocumentService;
 import com.yourname.domain.Entity.Document;
 import com.yourname.mind.common.constant.MqConstant;
-import com.yourname.service.IParseService;
-import com.yourname.service.IUploadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.core.ExchangeTypes;
 import org.springframework.amqp.rabbit.annotation.Exchange;
@@ -14,8 +13,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 @RequiredArgsConstructor
 public class ListenDocParse {
 
-    private final IParseService iParseService;
-
+    private final IMindDocumentService iDocumentService;
 
     @RabbitListener(bindings = @QueueBinding(
             value = @Queue(name = MqConstant.QUEUE_DOCUMENT_PARSE),
@@ -27,7 +25,7 @@ public class ListenDocParse {
         if (documentRecord == null) {
             return;
         }
-        iParseService.DocParse(documentRecord);
+        iDocumentService.DocParse(documentRecord);
     }
 
 }
