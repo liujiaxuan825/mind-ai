@@ -70,9 +70,8 @@ public class KnowledgeBloomFilterManager {
                 log.info("数据为空，无需添加数据");
             }
 
-            for (Long id : allKnowIds) {
-                addKnowledgeToBloom(id);
-            }
+
+            KnowledgeBloomFilter.add(allKnowIds);
             warmUpCompleted = true;
             log.info("成功将指定bloomData Bean的{}条数据存入布隆过滤器", allKnowIds.size());
         } catch (Exception e) {

@@ -145,17 +145,4 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
         return Result.success(countNum);
     }
 
-
-    @Async
-    public void initBloomKnowledgeIds(){
-        LambdaQueryWrapper<Knowledge> lqw = new LambdaQueryWrapper<>();
-        lqw.select(Knowledge::getId);
-        List<Knowledge> list = this.list(lqw);
-        if(list.isEmpty()){
-            return;
-        }
-        Set<Long> knowledgeIds = list.stream().map(Knowledge::getId).collect(Collectors.toSet());
-
-    }
-
 }

@@ -6,10 +6,12 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.benmanes.caffeine.cache.Cache;
 import com.yourname.Service.IKnowledgeCacheService;
 import com.yourname.domain.Entity.Knowledge;
 import com.yourname.domain.VO.KnowledgeVO;
 import com.yourname.mapper.MindKnowledgeMapper;
+import com.yourname.mind.Bloom.KnowledgeBloomFilterManager;
 import com.yourname.mind.aop.CacheMonitor;
 import com.yourname.mind.common.constant.RedisConstant;
 import com.yourname.mind.config.StringRedisTemplateConfig;
@@ -31,6 +33,10 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
     
     private final StringRedisTemplateConfig.RedisCacheUtils redisCacheUtils;
 
+    private final KnowledgeBloomFilterManager knowledgeBloom;
+
+    private final Cache<Long,KnowledgeVO> knowledgeVOLocalCache;
+
     /**
      * 获取单个缓存的过程
      * @param id
@@ -39,16 +45,31 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
     @Override
     @CacheMonitor(cacheName = "knowledge")
     public KnowledgeVO getKnowledgeById(Long id) {
+        //1.先查询布隆过滤器是否存在数据
+        boolean contain = knowledgeBloom.isKnowledgeContain(id);
+        if(!contain){
+            return null;
+        }
+
+        //2.查询本地缓存的数据
+        KnowledgeVO localVo = knowledgeVOLocalCache.getIfPresent(id);
+        if(localVo!=null){
+            log.info("命中本地缓存，直接返回");
+            return localVo;
+        }
+
+        //3.redis的查询
         Long userId = UserContextHolder.getCurrentUserId();
         String key = RedisConstant.KNOWLEDGE_ID + userId + id;
         try {
             KnowledgeVO knowledgeVO = redisCacheUtils.get(key, KnowledgeVO.class);
             if(knowledgeVO!=null){
-                if(RedisConstant.CACHE_NULL_OBJECT.equals(knowledgeVO)){
-                    return null;
-                }
+                log.info("命中redis缓存,返回数据");
                 return knowledgeVO;
             }
+
+            //4.数据库查询
+            //TODO:防止缓存穿透,分布式锁
             Knowledge know = getById(id);
             KnowledgeVO vo = BeanUtil.copyProperties(know, KnowledgeVO.class);
             //如果不存在缓存空值，返回null;
