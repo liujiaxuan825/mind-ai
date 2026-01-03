@@ -1,7 +1,5 @@
 package com.yourname.mind.aop.config;
 
-import com.yourname.mind.aop.CacheMonitorBO;
-
 public class CacheContextHolder {
 
     private static final ThreadLocal<Boolean> CACHE_HIT = new ThreadLocal<>();

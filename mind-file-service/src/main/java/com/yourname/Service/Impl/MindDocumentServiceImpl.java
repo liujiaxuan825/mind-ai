@@ -11,6 +11,8 @@ import com.yourname.Service.IMindDocumentService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.yourname.domain.VO.DocumentVO;
 import com.yourname.domain.enumsPack.DocumentStatus;
+import com.yourname.mind.Bloom.DocumentBloomFilterManager;
+import com.yourname.mind.Bloom.KnowledgeBloomFilterManager;
 import com.yourname.mind.aliyun.AliyunOssUtil;
 import com.yourname.mind.common.Result;
 import com.yourname.mind.common.constant.MqConstant;
@@ -64,6 +66,8 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
 
     private final Tika tika;
 
+    private final DocumentBloomFilterManager documentBloomFilterManager;
+
 
     @Override
     public Result<String> addDocument(Long klId, MultipartFile file) {
@@ -71,13 +75,16 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
         //直接调用统一上传文件服务
         String fileKey = uploadService.uploadFileToOss(file);
 
-        // 创建文档记录
+        // 创建文档记录,保存到数据库
         Document documentRecord = createDocumentRecord(klId, file, fileKey);
 
         // 触发异步解析
         triggerDocumentParse(documentRecord);
 
-        // 8. 返回VO对象
+        //保存到布隆过滤器
+        documentBloomFilterManager.isDocumentContain(documentRecord.getId());
+
+        // 返回VO对象
         return Result.success(fileKey);
     }
 

@@ -24,12 +24,11 @@ public class KnowledgeBloomFilterManager {
     @Resource
     private RedissonClient redissonClient;
 
-    @Resource
     private RBloomFilter<Long> KnowledgeBloomFilter;
 
     private static final String knowledgeBloomKey = "mind-ai:bloom:knowledge:id";
 
-    private volatile boolean warmUpCompleted = false;
+    private volatile boolean KnoWarmUpCompleted = false;
 
     @PostConstruct
     public void initKnowledgeBloomFilter(){
@@ -41,8 +40,6 @@ public class KnowledgeBloomFilterManager {
             log.info("知识库布隆过滤器已经存在！复用已有配置");
         }
     }
-
-
 
     public boolean isKnowledgeContain(Long id){
         if(id == null){
@@ -58,7 +55,7 @@ public class KnowledgeBloomFilterManager {
 
     @Async("bloom")
     public void addAllKnowledgeToBloom() {
-        if(bloomDataProvider==null||warmUpCompleted){
+        if(bloomDataProvider == null || KnoWarmUpCompleted){
             log.info("数据已存入或bean为空，无需执行");
             return;
         }
@@ -66,16 +63,22 @@ public class KnowledgeBloomFilterManager {
         try {
             List<Long> allKnowIds = bloomDataProvider.getAllKnowIds();
             if(allKnowIds.isEmpty()){
-                warmUpCompleted = true;
+                KnoWarmUpCompleted = true;
                 log.info("数据为空，无需添加数据");
             }
 
-
             KnowledgeBloomFilter.add(allKnowIds);
-            warmUpCompleted = true;
+            KnoWarmUpCompleted = true;
             log.info("成功将指定bloomData Bean的{}条数据存入布隆过滤器", allKnowIds.size());
         } catch (Exception e) {
             log.error("将指定bloomData Bean的数据存入布隆过滤器失败", e);
         }
+    }
+
+    public void reBuildBloom(List<Long> data) {
+        redissonClient.getKeys().delete(knowledgeBloomKey);
+        KnowledgeBloomFilter = redissonClient.getBloomFilter(knowledgeBloomKey);
+        KnowledgeBloomFilter.tryInit(1000, 0.01);
+        KnowledgeBloomFilter.add(data);
     }
 }

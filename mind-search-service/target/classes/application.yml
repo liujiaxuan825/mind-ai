@@ -3,22 +3,8 @@ spring:
     redis:
       host: localhost
       port: 6379
-      timeout: 2000ms
       database: 0
       # 没有密码，保持简洁
-      lettuce:
-        pool:
-          max-active: 16        # 连接池最大连接数（CPU核心数*2）
-          max-idle: 8           # 最大空闲连接（保留8个，避免重新创建）
-          min-idle: 2           # 最小空闲连接（至少2个，快速响应）
-          max-wait: 1000ms      # 获取连接的最大等待时间（超时抛异常，避免阻塞）
-    cache:
-      type: redis
-      redis:
-        key-prefix:
-          sk: mind              # 统一缓存前缀（mind）
-        use-key-prefix: true    # 启用前缀
-
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/mind_ai
@@ -37,7 +23,6 @@ spring:
           initial-interval: 2000    # 2秒
           multiplier: 2.0           # 指数退避：2s, 4s, 8s
           max-interval: 10000       # 最大间隔10秒
-
   elasticsearch:
     uris: http://localhost:19200
 # MyBatis-Plus配置
@@ -56,20 +41,9 @@ mybatis-plus:
 
 # 应用配置
 server:
-  port: 8081
+  port: 8082
   servlet:
     context-path: /api
-aliyun:
-  oss:
-    endpoint: oss-cn-beijing.aliyuncs.com
-    # 访问凭证AccessKey (非常重要！不要泄露)
-    access-key-id: ${OSS_ACCESS_KEY_ID:}
-    access-key-secret: ${OSS_ACCESS_KEY_SECRET:}
-    # 存储桶名称 (你在OSS控制台创建的Bucket名字)
-    bucket-name: liujiaxuan-mind-ai
-    # 自定义配置：文件访问URL的前缀（可选，但推荐）
-    url-prefix: https://${aliyun.oss.bucket-name}.${aliyun.oss.endpoint}/
-# 日志配置（可选）
 logging:
   level:
     com.yourname: debug

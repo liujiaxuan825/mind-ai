@@ -6,4 +6,6 @@ public interface BloomDataProvider<T> {
 
     List<T> getAllKnowIds();
 
+    List<T> getAllDocumentIds();
+
 }

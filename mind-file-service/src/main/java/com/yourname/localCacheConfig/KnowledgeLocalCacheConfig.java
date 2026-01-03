@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 public class KnowledgeLocalCacheConfig {
 
     @Bean
-    public Cache<String, KnowledgeVO> knowledgeVOLocalCache(){
+    public Cache<Long, KnowledgeVO> knowledgeVOLocalCache() {
         return Caffeine.newBuilder()
                 .maximumSize(10000)
                 .expireAfterWrite(1, TimeUnit.HOURS)

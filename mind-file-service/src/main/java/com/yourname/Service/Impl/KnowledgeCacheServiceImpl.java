@@ -69,7 +69,6 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
         }
 
         //3.redis的查询
-
         try {
             KnowledgeVO knowledgeVO = redisCacheUtils.get(key, KnowledgeVO.class);
             if(knowledgeVO!=null){

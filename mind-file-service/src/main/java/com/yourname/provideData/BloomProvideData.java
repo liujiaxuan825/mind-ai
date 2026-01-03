@@ -1,7 +1,9 @@
 package com.yourname.provideData;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.yourname.Service.IMindDocumentService;
 import com.yourname.Service.IMindKnowledgeService;
+import com.yourname.domain.Entity.Document;
 import com.yourname.domain.Entity.Knowledge;
 import com.yourname.mind.infer.BloomDataProvider;
 import jakarta.annotation.Resource;
@@ -17,6 +19,9 @@ public class BloomProvideData implements BloomDataProvider<Long> {
     @Resource
     private IMindKnowledgeService mindKnowledgeService;
 
+    @Resource
+    private IMindDocumentService mindDocumentService;
+
     @Override
     public List<Long> getAllKnowIds() {
         LambdaQueryWrapper<Knowledge> lqw = new LambdaQueryWrapper<>();
@@ -26,5 +31,16 @@ public class BloomProvideData implements BloomDataProvider<Long> {
             return Collections.emptyList();
         }
         return knowledgeList.stream().map(Knowledge::getId).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Long> getAllDocumentIds() {
+        LambdaQueryWrapper<Document> lqw = new LambdaQueryWrapper<>();
+        lqw.select(Document::getId);
+        List<Document> documentList = mindDocumentService.list(lqw);
+        if(documentList.isEmpty()){
+            return Collections.emptyList();
+        }
+        return documentList.stream().map(Document::getId).collect(Collectors.toList());
     }
 }
