@@ -18,7 +18,6 @@ spring:
         key-prefix:
           sk: mind              # 统一缓存前缀（mind）
         use-key-prefix: true    # 启用前缀
-
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/mind_ai
@@ -52,7 +51,6 @@ mybatis-plus:
       logic-delete-field: deleted
       logic-delete-value: 1
       logic-not-delete-value: 0
-
 
 # 应用配置
 server:

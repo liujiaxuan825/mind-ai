@@ -18,7 +18,7 @@ import java.util.List;
 @Slf4j
 public class KnowledgeBloomFilterManager {
 
-    @Resource(name = "bloomData")
+    @Resource
     private BloomDataProvider<Long> bloomDataProvider;
 
     @Resource

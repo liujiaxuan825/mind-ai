@@ -16,7 +16,7 @@ import java.util.List;
 @Component
 public class DocumentBloomFilterManager {
 
-    @Resource(name = "bloomData")
+    @Resource
     private BloomDataProvider<Long>  bloomDataProvider;
 
     @Resource

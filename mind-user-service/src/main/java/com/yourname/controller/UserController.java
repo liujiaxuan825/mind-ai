@@ -5,8 +5,6 @@ import com.yourname.domain.dto.UserRegisterDTO;
 import com.yourname.domain.vo.UserLoginVO;
 import com.yourname.domain.vo.UserVO;
 import com.yourname.mind.common.Result;
-import com.yourname.mind.exception.BusinessException;
-import com.yourname.mind.service.TokenBlacklistService;
 import com.yourname.service.MindUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
