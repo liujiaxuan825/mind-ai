@@ -15,7 +15,6 @@ redisson:
     database: ${spring.redis.database}
 thread:
   pool:
-    # 1. 布隆过滤器预热专用线程池
     bloom:
       core-size: 5        # 核心线程数（4核8G服务器推荐：CPU核数+1）
       max-size: 10        # 最大线程数（核心数*2）

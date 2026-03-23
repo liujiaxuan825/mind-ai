@@ -1,4 +1,13 @@
 spring:
+  application:
+    name: mind-user-service
+  profiles:
+    active: dev
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        namespace: ""
   data:
     redis:
       host: localhost
@@ -27,7 +36,7 @@ mybatis-plus:
       logic-delete-field: deleted
       logic-delete-value: 1
       logic-not-delete-value: 0
-  type-enums-package: com.yourname.enumsPack
+  type-enums-package: com.liu.user.enumsPack
 
 # 应用配置
 server:
@@ -45,7 +54,7 @@ jwt:
 # 日志配置（可选）
 logging:
   level:
-    com.yourname: debug
+    com.liu.user: debug
     org.springframework.web: info
 aliyun:
   oss:
@@ -57,4 +66,12 @@ aliyun:
     bucket-name: liujiaxuan-mind-ai
     # 自定义配置：文件访问URL的前缀（可选，但推荐）
     url-prefix: https://${aliyun.oss.bucket-name}.${aliyun.oss.endpoint}/
-
+thread:
+  pool:
+    bloom:
+      core-size: 5        # 核心线程数（4核8G服务器推荐：CPU核数+1）
+      max-size: 10        # 最大线程数（核心数*2）
+      queue-size: 1000    # 任务队列容量（有界，避免OOM）
+      keep-alive-seconds: 60  # 空闲线程存活时间
+      thread-name-prefix: bloom-  # 线程名前缀（日志排查用）
+      businessAwaitTerminationSeconds: 300

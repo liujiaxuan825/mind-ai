@@ -1,4 +1,10 @@
 spring:
+  application:
+    name: mind-search-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
   data:
     redis:
       host: localhost
@@ -8,6 +14,7 @@ spring:
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/mind_ai
+    jdbc-url: jdbc:postgresql://localhost:5432/mind_ai
     username: mind_user
     password: mind123
   web:
@@ -41,10 +48,31 @@ mybatis-plus:
 
 # 应用配置
 server:
-  port: 8082
+  port: 8083
   servlet:
     context-path: /api
 logging:
   level:
     com.yourname: debug
     org.springframework.web: info
+
+aliyun:
+  oss:
+    endpoint: oss-cn-beijing.aliyuncs.com
+    # 访问凭证AccessKey (非常重要！不要泄露)
+    access-key-id: ${OSS_ACCESS_KEY_ID:}
+    access-key-secret: ${OSS_ACCESS_KEY_SECRET:}
+    # 存储桶名称 (你在OSS控制台创建的Bucket名字)
+    bucket-name: liujiaxuan-mind-ai
+    # 自定义配置：文件访问URL的前缀（可选，但推荐）
+    url-prefix: https://${aliyun.oss.bucket-name}.${aliyun.oss.endpoint}/
+
+thread:
+  pool:
+    bloom:
+      core-size: 5        # 核心线程数（4核8G服务器推荐：CPU核数+1）
+      max-size: 10        # 最大线程数（核心数*2）
+      queue-size: 1000    # 任务队列容量（有界，避免OOM）
+      keep-alive-seconds: 60  # 空闲线程存活时间
+      thread-name-prefix: bloom-  # 线程名前缀（日志排查用）
+      businessAwaitTerminationSeconds: 300

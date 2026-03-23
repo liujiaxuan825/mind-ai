@@ -1,4 +1,13 @@
 spring:
+  application:
+    name: mind-file-service
+  profiles:
+    active: dev
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        namespace: ""
   data:
     redis:
       host: localhost
@@ -21,6 +30,7 @@ spring:
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/mind_ai
+    jdbc-url: jdbc:postgresql://localhost:5432/mind_ai
     username: mind_user
     password: mind123
   web:
@@ -41,6 +51,7 @@ spring:
     uris: http://localhost:19200
 # MyBatis-Plus配置
 mybatis-plus:
+  mapper-locations: classpath:com.liu.file.mapper/
   configuration:
     default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler
     map-underscore-to-camel-case: true
@@ -51,6 +62,7 @@ mybatis-plus:
       logic-delete-field: deleted
       logic-delete-value: 1
       logic-not-delete-value: 0
+  type-enums-package: com.liu.user.enumsPack
 
 # 应用配置
 server:
@@ -66,9 +78,13 @@ aliyun:
     # 存储桶名称 (你在OSS控制台创建的Bucket名字)
     bucket-name: liujiaxuan-mind-ai
     # 自定义配置：文件访问URL的前缀（可选，但推荐）
-    url-prefix: https://${aliyun.oss.bucket-name}.${aliyun.oss.endpoint}/
-# 日志配置（可选）
-logging:
-  level:
-    com.yourname: debug
-    org.springframework.web: info
+    url-prefix: https://${aliyun.oss.bucket-name}.${aliyun.oss.endpoint}
+thread:
+  pool:
+    bloom:
+      core-size: 5        # 核心线程数（4核8G服务器推荐：CPU核数+1）
+      max-size: 10        # 最大线程数（核心数*2）
+      queue-size: 1000    # 任务队列容量（有界，避免OOM）
+      keep-alive-seconds: 60  # 空闲线程存活时间
+      thread-name-prefix: bloom-  # 线程名前缀（日志排查用）
+      businessAwaitTerminationSeconds: 300

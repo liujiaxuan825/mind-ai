@@ -11,10 +11,10 @@
       "pinyin_filter": {
         "type": "pinyin",
         "keep_full_pinyin": true,
-        "keep_joined_full_pinyin": true,
         "keep_original": true,
         "limit_first_letter_length": 16,
-        "remove_duplicated_term": true
+        "remove_duplicated_term": true,
+        "lowercase": true
       }
     }
   }
