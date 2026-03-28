@@ -1,16 +1,18 @@
 package com.liu.file.controller;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.liu.common.untils.UserContext;
 import com.liu.file.Service.IMindDocumentService;
+import com.liu.file.domain.Entity.Document;
 import com.liu.file.domain.VO.DocumentVO;
-import com.liu.common.mind.common.Result;
-import com.liu.common.mind.common.page.PageRequestDTO;
-import com.liu.common.mind.common.page.PageResultVO;
+import com.liu.common.common.Result;
+import com.liu.common.common.page.PageRequestDTO;
+import com.liu.common.common.page.PageResultVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
 
 /**
  * <p>
@@ -24,8 +26,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/document")
 public class MindDocumentController {
-    private final IMindDocumentService mindDocumentService;
 
+    private final IMindDocumentService mindDocumentService;
 
     /**
      * 添加文档
@@ -35,7 +37,7 @@ public class MindDocumentController {
      */
     @PostMapping("/add/{klId}")
     public Result<String> addDocument(@PathVariable Long klId,
-                                    @RequestParam("file") MultipartFile file) {
+                                    @RequestPart("file") MultipartFile file) {
         return mindDocumentService.addDocument(klId,file);
     }
 
@@ -45,7 +47,7 @@ public class MindDocumentController {
      * @param kbId
      * @return
      */
-    @GetMapping("/list/{kbId}")
+    @PostMapping("/list/{kbId}")
     public Result<PageResultVO<DocumentVO>> pageSelectDoc(@RequestBody PageRequestDTO page, @PathVariable Long kbId){
         return mindDocumentService.pageSelect(page,kbId);
     }
@@ -76,6 +78,13 @@ public class MindDocumentController {
         return mindDocumentService.countDocumentNum();
     }
 
-
-
+    /**
+     * 重新解析文档
+     * @param docId
+     * @return
+     */
+    @PostMapping("/reparse/{docId}")
+    public Result<String> reParseDocument(@PathVariable Long docId){
+        return mindDocumentService.reDocParse(docId);
+    }
 }

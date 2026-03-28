@@ -12,7 +12,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
  *
  *
  */
-@SpringBootApplication(scanBasePackages = {"com.liu.file", "com.liu.common.mind", "com.liu.upload"},
+@SpringBootApplication(scanBasePackages = {"com.liu.file", "com.liu.common", "com.liu.upload"},
     exclude = {MybatisPlusAutoConfiguration.class})
 @MapperScan("com.liu.file.mapper")
 @EnableDiscoveryClient

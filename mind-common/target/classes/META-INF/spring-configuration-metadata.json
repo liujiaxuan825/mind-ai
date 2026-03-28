@@ -2,30 +2,30 @@
   "groups": [
     {
       "name": "jwt",
-      "type": "com.liu.common.mind.config.JwtProperties",
-      "sourceType": "com.liu.common.mind.config.JwtProperties"
+      "type": "com.liu.common.config.jwtConfig.JwtProperties",
+      "sourceType": "com.liu.common.config.jwtConfig.JwtProperties"
     }
   ],
   "properties": [
     {
       "name": "jwt.expiration",
       "type": "java.lang.Long",
-      "sourceType": "com.liu.common.mind.config.JwtProperties"
+      "sourceType": "com.liu.common.config.jwtConfig.JwtProperties"
     },
     {
       "name": "jwt.header",
       "type": "java.lang.String",
-      "sourceType": "com.liu.common.mind.config.JwtProperties"
+      "sourceType": "com.liu.common.config.jwtConfig.JwtProperties"
     },
     {
       "name": "jwt.secret",
       "type": "java.lang.String",
-      "sourceType": "com.liu.common.mind.config.JwtProperties"
+      "sourceType": "com.liu.common.config.jwtConfig.JwtProperties"
     },
     {
       "name": "jwt.token-prefix",
       "type": "java.lang.String",
-      "sourceType": "com.liu.common.mind.config.JwtProperties"
+      "sourceType": "com.liu.common.config.jwtConfig.JwtProperties"
     }
   ],
   "hints": []

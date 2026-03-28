@@ -2,13 +2,13 @@ package com.liu.file.Service.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.liu.common.untils.UserContext;
 import com.liu.file.Service.IDocumentCacheService;
 import com.liu.file.domain.Entity.Document;
 import com.liu.file.mapper.MindDocumentMapper;
-import com.liu.common.mind.aop.CacheMonitor;
-import com.liu.common.mind.common.constant.RedisConstant;
-import com.liu.common.mind.config.StringRedisTemplateConfig;
-import com.liu.common.mind.config.UserContextHolder;
+import com.liu.common.aop.CacheMonitor;
+import com.liu.common.common.constant.RedisConstant;
+import com.liu.common.config.redisConfig.StringRedisTemplateConfig;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +22,7 @@ public class DocumentCacheServiceImpl extends ServiceImpl<MindDocumentMapper, Do
     @Override
     @CacheMonitor(cacheName = "document")
     public Long countNum() {
-        Long userId = UserContextHolder.getCurrentUserId();
+        Long userId = UserContext.getUserId();
         String key = RedisConstant.DOCUMENT_COUNT_NUM + userId;
         Long num = redisCacheUtils.get(key, Long.class);
 
@@ -39,7 +39,7 @@ public class DocumentCacheServiceImpl extends ServiceImpl<MindDocumentMapper, Do
 
     @Override
     public void deleteCountNum() {
-        Long userId = UserContextHolder.getCurrentUserId();
+        Long userId = UserContext.getUserId();
         String key = RedisConstant.DOCUMENT_COUNT_NUM + userId;
         redisCacheUtils.delete(key);
     }

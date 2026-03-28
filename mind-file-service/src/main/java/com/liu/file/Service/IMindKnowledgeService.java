@@ -4,9 +4,9 @@ import com.liu.file.domain.DTO.KnowledgeDTO;
 import com.liu.file.domain.Entity.Knowledge;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.liu.file.domain.VO.KnowledgeVO;
-import com.liu.common.mind.common.Result;
-import com.liu.common.mind.common.page.PageRequestDTO;
-import com.liu.common.mind.common.page.PageResultVO;
+import com.liu.common.common.Result;
+import com.liu.common.common.page.PageRequestDTO;
+import com.liu.common.common.page.PageResultVO;
 
 import java.util.List;
 

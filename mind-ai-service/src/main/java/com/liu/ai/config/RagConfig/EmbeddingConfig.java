@@ -1,6 +1,6 @@
 package com.liu.ai.config.RagConfig;
 
-import com.liu.common.mind.config.UserContextHolder;
+import com.liu.common.untils.UserContext;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.document.splitter.DocumentSplitters;
@@ -23,7 +23,7 @@ public class EmbeddingConfig {
     public EmbeddingStoreIngestor createEsi(){
         return EmbeddingStoreIngestor.builder()
                 .documentTransformer(doc ->{
-                    String userId = String.valueOf(UserContextHolder.getCurrentUserId());
+                    String userId = String.valueOf(UserContext.getUserId());
                     Metadata metadata = doc.metadata();
                     metadata.put("userId", userId);
                     String text = doc.text().replaceAll("\\n{3,}", "\n\n");

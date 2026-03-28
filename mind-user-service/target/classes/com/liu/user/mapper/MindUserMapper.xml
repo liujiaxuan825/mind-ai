@@ -18,8 +18,4 @@
             <result property="updateTime" column="update_time" />
     </resultMap>
 
-    <sql id="Base_Column_List">
-        id,username,password,email,nickname,avatar,
-        phone,status,last_login_time,create_time,update_time
-    </sql>
 </mapper>

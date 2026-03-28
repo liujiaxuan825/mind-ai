@@ -5,15 +5,15 @@ import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
+import com.liu.common.untils.UserContext;
 import com.liu.file.Service.IKnowledgeCacheService;
 import com.liu.file.domain.Entity.Knowledge;
 import com.liu.file.domain.VO.KnowledgeVO;
 import com.liu.file.mapper.MindKnowledgeMapper;
 import com.liu.file.Bloom.KnowledgeBloomFilterManager;
-import com.liu.common.mind.aop.CacheMonitor;
-import com.liu.common.mind.common.constant.RedisConstant;
-import com.liu.common.mind.config.StringRedisTemplateConfig;
-import com.liu.common.mind.config.UserContextHolder;
+import com.liu.common.aop.CacheMonitor;
+import com.liu.common.common.constant.RedisConstant;
+import com.liu.common.config.redisConfig.StringRedisTemplateConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -46,7 +46,7 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
     @Override
     @CacheMonitor(cacheName = "knowledge")
     public KnowledgeVO getKnowledgeById(Long id) {
-        Long userId = UserContextHolder.getCurrentUserId();
+        Long userId = UserContext.getUserId();
         String key = RedisConstant.KNOWLEDGE_ID + userId + "_" + id;
 
         String lockKey = "KnowledgeIds:" + id + userId;
@@ -59,16 +59,17 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
         }
 
         //2.查询本地缓存的数据
-        KnowledgeVO localVo = knowledgeVOLocalCache.getIfPresent(key);
+        KnowledgeVO localVo = knowledgeVOLocalCache.getIfPresent(id.toString());
         if(localVo!=null){
             log.info("命中本地缓存，直接返回");
             return localVo;
         }
 
         //3.redis的查询
+        boolean locked = false;
         try {
             KnowledgeVO knowledgeVO = redisCacheUtils.get(key, KnowledgeVO.class);
-            if(knowledgeVO!=null){
+            if(knowledgeVO != null){
                 log.info("命中redis缓存,返回数据");
                 knowledgeVOLocalCache.put(key, knowledgeVO);
                 return knowledgeVO;
@@ -77,13 +78,14 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
 
             KnowledgeVO vo = null;
             //4.数据库查询
-            boolean tryLock = lock.tryLock(5, 30, TimeUnit.SECONDS);
+            boolean tryLock = lock.tryLock(30, 5, TimeUnit.SECONDS);
+            locked = tryLock;
             if(!tryLock){
                 log.warn("获取分布式锁失败，知识库ID：{}", id);
                 Thread.sleep(100);
                 vo = redisCacheUtils.get(key,KnowledgeVO.class);
                 if(vo!=null){
-                    knowledgeVOLocalCache.put(key,vo);
+                    knowledgeVOLocalCache.put(id.toString(),vo);
                     return vo;
                 }
             }
@@ -92,26 +94,20 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
             vo = redisCacheUtils.get(key,KnowledgeVO.class);
             if (vo != null) {
                 log.info("双重检查命中Redis缓存，知识库ID：{}", id);
-                knowledgeVOLocalCache.put(key, vo);
+                knowledgeVOLocalCache.put(id.toString(), vo);
                 return vo;
             }
-            localVo = knowledgeVOLocalCache.getIfPresent(key);
-            if (localVo != null) {
-                log.info("双重检查命中本地缓存，知识库ID：{}", id);
-                return localVo;
-            }
-
 
             Knowledge know = getById(id);
 
             //如果不存在缓存空值，返回null;
-            if(know==null){
+            if(know == null){
                 redisCacheUtils.setEmptyValue(key,RedisConstant.CACHE_NULL_TTL);
                 return null;
             }
 
             KnowledgeVO resultVo = BeanUtil.copyProperties(know, KnowledgeVO.class);
-            knowledgeVOLocalCache.put(key,resultVo);
+            knowledgeVOLocalCache.put(id.toString(), resultVo);
             redisCacheUtils.setWithRandomExpire(key,resultVo,RedisConstant.KNOWLEDGE_ID_TTL);
             return resultVo;
 
@@ -119,7 +115,9 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
             log.error("redis缓存失败，{}",e);
             return BeanUtil.copyProperties(getById(id),KnowledgeVO.class);
         }finally {
-            lock.unlock();
+            if (locked) {
+                lock.unlock();
+            }
         }
     }
 
@@ -129,11 +127,12 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
      */
     @Override
     public void updateKnowledge(Knowledge knowledge) {
-        Long userId = UserContextHolder.getCurrentUserId();
-        String key = RedisConstant.KNOWLEDGE_ID + userId + knowledge.getId();
+        Long userId = UserContext.getUserId();
+        String key = RedisConstant.KNOWLEDGE_ID + userId + "_" + knowledge.getId();
         try {
             KnowledgeVO knowledgeVO = BeanUtil.copyProperties(knowledge, KnowledgeVO.class);
-            redisCacheUtils.setWithRandomExpire(key,knowledgeVO,RedisConstant.KNOWLEDGE_ID_TTL);
+            redisCacheUtils.delete(key);
+            knowledgeVOLocalCache.invalidate(knowledge.getId().toString());
         } catch (Exception e) {
             log.error("redis更新缓存失败,{}",e);
         }
@@ -145,8 +144,8 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
      */
     @Override
     public void deleteKnowledge(Long id) {
-        Long userId = UserContextHolder.getCurrentUserId();
-        String key = RedisConstant.KNOWLEDGE_ID + userId + id;
+        Long userId = UserContext.getUserId();
+        String key = RedisConstant.KNOWLEDGE_ID + userId + "_" + id;
         try {
             redisCacheUtils.delete(key);
         } catch (Exception e) {
@@ -167,7 +166,7 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
         List<KnowledgeVO> result = new ArrayList<>();
         for (Long id : ids) {
             KnowledgeVO knowledgeVO = getKnowledgeById(id);
-            if(knowledgeVO==null){
+            if(knowledgeVO == null){
                 continue;
             }
             result.add(knowledgeVO);
@@ -178,7 +177,7 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
     @Override
     @CacheMonitor(cacheName = "knowledge")
     public Long knowledgeCountNum() {
-        Long userId = UserContextHolder.getCurrentUserId();
+        Long userId = UserContext.getUserId();
         String key = RedisConstant.KNOWLEDGE_COUNT_NUM + userId;
         try {
             Long num = redisCacheUtils.get(key, Long.class);
@@ -198,7 +197,7 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
 
     @Override
     public void deleteKnowledgeCountNum() {
-        Long userId = UserContextHolder.getCurrentUserId();
+        Long userId = UserContext.getUserId();
         String key = RedisConstant.KNOWLEDGE_COUNT_NUM + userId;
         redisCacheUtils.delete(key);
     }

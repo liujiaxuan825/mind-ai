@@ -5,7 +5,7 @@ import com.liu.search.config.DocumentToEsConverter;
 import com.liu.search.config.EsDocumentRepository;
 import com.liu.file.domain.Entity.Document;
 import com.liu.search.domain.Entity.EsDocument;
-import com.liu.common.mind.common.constant.MqConstant;
+import com.liu.common.common.constant.MqConstant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.core.ExchangeTypes;
 import org.springframework.amqp.rabbit.annotation.Exchange;

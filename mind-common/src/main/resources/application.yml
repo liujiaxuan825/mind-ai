@@ -1,3 +1,10 @@
+# JWT配置
+jwt:
+  secret: "bWluZC1haS1qd3Qtc2VjcmV0LWtleS0yMDI1LXNwcmluZy1ib290LTMtc2VjdXJpdHktdG9rZW4tbWFuYWdlbWVudC1zeXN0ZW0tYWR2YW5jZWQtdmVyc2lvbg=="
+  expiration: 1800000  # 30分钟，单位毫秒
+  token-prefix: "Bearer "
+  header: "Authorization"
+
 aliyun:
   oss:
     endpoint: oss-cn-beijing.aliyuncs.com
@@ -22,4 +29,3 @@ thread:
       keep-alive-seconds: 60  # 空闲线程存活时间
       thread-name-prefix: bloom-  # 线程名前缀（日志排查用）
       businessAwaitTerminationSeconds: 300
-

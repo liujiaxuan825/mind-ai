@@ -1,7 +1,7 @@
 package com.liu.upload.service.Impl;
 
-import com.liu.common.mind.aliyun.AliyunOssUtil;
-import com.liu.common.mind.exception.BusinessException;
+import com.liu.common.untils.AliyunOssUtil;
+import com.liu.common.exception.BusinessException;
 import com.liu.upload.service.IUploadService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

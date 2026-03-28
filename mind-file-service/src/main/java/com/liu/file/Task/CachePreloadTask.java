@@ -1,7 +1,7 @@
 package com.liu.file.Task;
 
 import com.liu.file.Service.IMindKnowledgeService;
-import com.liu.common.mind.config.StringRedisTemplateConfig;
+import com.liu.common.config.redisConfig.StringRedisTemplateConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

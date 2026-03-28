@@ -1,8 +1,8 @@
 package com.liu.search.config;
 
+import com.liu.common.untils.UserContext;
 import com.liu.file.domain.Entity.Document;
 import com.liu.search.domain.Entity.EsDocument;
-import com.liu.common.mind.config.UserContextHolder;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -13,7 +13,7 @@ public class DocumentToEsConverter {
         esDocument.setId(document.getId());
         esDocument.setTitle(document.getName());
         //TODO: 以后共享知识库需要调整
-        esDocument.setAuthor(UserContextHolder.getCurrentUsername());
+        esDocument.setAuthor(UserContext.getUsername());
         esDocument.setKnowledgeId(document.getKnowledgeId());
         esDocument.setContent(document.getContentText());
         esDocument.setCreateTime(document.getCreatedTime());

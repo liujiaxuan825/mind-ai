@@ -32,7 +32,7 @@ public class Document implements Serializable {
     /**
      * 绑定的知识库
      */
-    private Long KnowledgeId;
+    private Long knowledgeId;
 
     /**
      * 文件名

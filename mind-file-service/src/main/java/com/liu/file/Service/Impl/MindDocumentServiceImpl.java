@@ -4,7 +4,9 @@ import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.liu.common.untils.UserContext;
 import com.liu.file.Service.IDocumentCacheService;
+import com.liu.file.config.RabbitMqSendUtil;
 import com.liu.file.domain.Entity.Document;
 import com.liu.file.feign.UploadFeignClient;
 import com.liu.file.mapper.MindDocumentMapper;
@@ -13,19 +15,18 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.liu.file.domain.VO.DocumentVO;
 import com.liu.file.domain.enumsPack.DocumentStatus;
 import com.liu.file.Bloom.DocumentBloomFilterManager;
-import com.liu.common.mind.aliyun.AliyunOssUtil;
-import com.liu.common.mind.common.Result;
-import com.liu.common.mind.common.constant.MqConstant;
-import com.liu.common.mind.common.page.PageRequestDTO;
-import com.liu.common.mind.common.page.PageResultVO;
-import com.liu.common.mind.config.UserContextHolder;
-import com.liu.common.mind.exception.BusinessException;
-import com.liu.upload.service.IUploadService;
+import com.liu.common.untils.AliyunOssUtil;
+import com.liu.common.common.Result;
+import com.liu.common.common.constant.MqConstant;
+import com.liu.common.common.page.PageRequestDTO;
+import com.liu.common.common.page.PageResultVO;
+import com.liu.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -57,7 +58,7 @@ import java.util.Objects;
 public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Document> implements IMindDocumentService {
 
 
-    private final RabbitTemplate rabbitTemplate;
+    private final RabbitMqSendUtil rabbitMqSendUtil;
 
     private final IDocumentCacheService  documentCacheService;
 
@@ -70,21 +71,23 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
     @Lazy
     private final DocumentBloomFilterManager documentBloomFilterManager;
 
+    private final MindDocumentMapper mindDocumentMapper;
+
 
     @Override
     public Result<String> addDocument(Long klId, MultipartFile file) {
 
         //直接调用统一上传文件服务
-        String fileKey = uploadFeignClient.uploadFile(file).getData().toString();
+        String fileKey = uploadFeignClient.uploadFile(file).getData();
 
         // 创建文档记录,保存到数据库
         Document documentRecord = createDocumentRecord(klId, file, fileKey);
 
-        // 触发异步解析
-        triggerDocumentParse(documentRecord);
-
         //保存到布隆过滤器
         documentBloomFilterManager.isDocumentContain(documentRecord.getId());
+
+        // 触发异步解析
+        triggerDocumentParse(documentRecord);
 
         // 返回VO对象
         return Result.success(fileKey);
@@ -95,7 +98,7 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
     public Result<PageResultVO<DocumentVO>> pageSelect(PageRequestDTO page, Long kbId) {
         LambdaQueryWrapper<Document> lqw = new LambdaQueryWrapper<>();
         lqw.eq(Document::getKnowledgeId, kbId)
-                .eq(Document::getCreatedByUserId,UserContextHolder.getCurrentUserId());
+                .eq(Document::getCreatedByUserId, UserContext.getUserId());
         Page<Document> pageResult = page(page.toMpPage(), lqw);
         List<DocumentVO> docList = pageResult.getRecords().stream().map(item -> BeanUtil.copyProperties(item, DocumentVO.class)).toList();
         PageResultVO<DocumentVO> result = PageResultVO.success(docList, pageResult.getTotal(), page);
@@ -107,7 +110,7 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
     public Result<DocumentVO> getDocument(Long docId) {
         LambdaQueryWrapper<Document> lqw = new LambdaQueryWrapper<>();
         lqw.eq(Document::getId, docId)
-        .eq(Document::getCreatedByUserId,UserContextHolder.getCurrentUserId());
+        .eq(Document::getCreatedByUserId,UserContext.getUserId());
         Document document = getOne(lqw);
         DocumentVO documentVO = BeanUtil.copyProperties(document, DocumentVO.class);
         return Result.success(documentVO);
@@ -116,9 +119,14 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
 
     @Override
     public void deleteDocument(Long docId) {
+        //删除数据库记录
         LambdaQueryWrapper<Document> lqw = new LambdaQueryWrapper<>();
         lqw.eq(Document::getId, docId)
-                .eq(Document::getCreatedByUserId,UserContextHolder.getCurrentUserId());
+                .eq(Document::getCreatedByUserId,UserContext.getUserId());
+        //删除阿里云文件
+        String url = mindDocumentMapper.selectDocFileKey(docId, UserContext.getUserId());
+        String lastUrl = url.replaceFirst("^https?://.*?\\.aliyuncs\\.com/", "");
+        aliyunOssUtil.deleteFile(lastUrl);
         remove(lqw);
     }
 
@@ -132,7 +140,9 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
 
     //异步处理解析文件
     private void triggerDocumentParse(Document documentRecord) {
-        rabbitTemplate.convertAndSend(MqConstant.EXCHANGE_DOCUMENT_PARSE,MqConstant.ROUT_KEY_DOCUMENT_PARSE,documentRecord);
+        log.info("触发文档异步解析，文档ID: {}", documentRecord.getId());
+        rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_PARSE, MqConstant.ROUT_KEY_DOCUMENT_PARSE,
+                        documentRecord, new CorrelationData(documentRecord.getId().toString()));
     }
 
 
@@ -146,7 +156,7 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
         document.setMimeType(file.getContentType());
         document.setFileExtension(extractFileExtension(Objects.requireNonNull(file.getOriginalFilename())));
         document.setStatus(DocumentStatus.UPLOADED);
-        document.setCreatedByUserId(UserContextHolder.getCurrentUserId());
+        document.setCreatedByUserId(UserContext.getUserId());
         this.save(document);
         return document;
     }
@@ -160,35 +170,44 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void DocParse(Document documentRecord) {
-        //更新文档状态为解析中
-        updateDocumentStatus(documentRecord,DocumentStatus.PARSING,"");
+        Document nowDocument = this.getById(documentRecord.getId());
+        //幂等性检查,mq消息重复消费时，避免重复解析文档
+        if (nowDocument.getStatus() == DocumentStatus.PARSING ||
+                nowDocument.getStatus() == DocumentStatus.COMPLETED ||
+                nowDocument.getStatus() == DocumentStatus.FAILED) {
+            log.warn("文档状态为解析完成或解析失败，无需解析，文档ID: {}", nowDocument.getId());
+            return;
+        }
 
+        //更新文档状态为解析中
+        log.info("开始解析文档，文档ID: {}", documentRecord.getId());
+        updateDocumentStatus(documentRecord, DocumentStatus.PARSING, "");
         String fileKey = documentRecord.getFileKey();
+        fileKey = fileKey.replaceFirst("^https?://.*?\\.aliyuncs\\.com/", "");
         Path tempFile = null;
         try {
-            // 1. 下载OSS文件到临时目录（核心逻辑保留）
+            // 1. 下载OSS文件到临时目录
             tempFile = aliyunOssUtil.downloadToTemp(fileKey);
-            log.info("文件下载完成，路径: {}", tempFile);
+            log.info("文档下载完成，路径: {}", tempFile);
 
-            // 2. 解析文本（核心逻辑保留，简化清洗规则）
+            // 2. 解析文本
             String content = parseFileContent(tempFile);
             log.info("文档解析完成，字符数: {}", content.length());
 
-            // 3. 提取页数（极简版：PDF精准，其他估算）
+            // 3. 提取页数
             Integer pageCount = getPageCount(tempFile, documentRecord.getMimeType());
             log.info("文档页数: {}", pageCount);
 
-            // 4. 更新数据库（核心逻辑保留）
+            // 4. 更新数据库
             updateDocumentContent(documentRecord, content, pageCount);
 
             // 5. 把数据一同存入es当中,为全文检索做准备
             documentRecord.setContentText(content);
             documentRecord.setPageCount(pageCount);
-            rabbitTemplate.convertAndSend(MqConstant.EXCHANGE_DOCUMENT_SAVE,MqConstant.ROUT_KEY_DOCUMENT_SAVE,documentRecord);
+            rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_SAVE, MqConstant.ROUT_KEY_DOCUMENT_SAVE, documentRecord, new CorrelationData(documentRecord.getId().toString()));
 
         } catch (Exception e) {
             log.error("文档解析/es写入失败，文档ID: {}", documentRecord.getId(), e);
-            updateDocumentStatus(documentRecord, DocumentStatus.FAILED, e.getMessage());
             throw new BusinessException("文档解析/es写入失败!");
         } finally {
             // 5. 简化的临时文件清理（单次重试，砍掉锁定检查）
@@ -196,13 +215,29 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
         }
     }
 
-    private void updateDocumentStatus(Document documentRecord, DocumentStatus status, String msg){
+    @Override
+    public Result<String> reDocParse(Long docId) {
+        Long userId = UserContext.getUserId();
+        Document documentRecord = getOne(new LambdaQueryWrapper<Document>()
+                .eq(Document::getCreatedByUserId, userId)
+                .eq(Document::getId, docId));
+        if (documentRecord == null) {
+            return Result.error("文档不存在");
+        }
+        log.info("重新解析文档，文档ID: {}", documentRecord.getId());
+        triggerDocumentParse(documentRecord);
+        return Result.success("重新解析中...");
+    }
+
+    public void updateDocumentStatus(Document documentRecord, DocumentStatus status, String msg){
         LambdaUpdateWrapper<Document> luw = new LambdaUpdateWrapper<>();
-        luw.set(Document::getStatus,status);
+        luw.eq(Document::getCreatedByUserId, documentRecord.getCreatedByUserId())
+                .eq(Document::getId, documentRecord.getId())
+                .set(Document::getStatus,status);
         if(!msg.isEmpty()){
             luw.set(Document::getParseErrorMessage,msg);
         }
-        update(documentRecord,luw);
+        update(luw);
     }
 
     // ========== 核心简化：文本解析（只保留必要清洗） ==========
@@ -251,10 +286,12 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
 
     private void updateDocumentContent(Document documentRecord, String content, Integer pageCount) {
         LambdaUpdateWrapper<Document> luw = new LambdaUpdateWrapper<>();
-        luw.set(Document::getContentText, content)
-                .set(Document::getPageCount, pageCount);
-        update(documentRecord,luw);
-
+        luw.eq(Document::getCreatedByUserId, documentRecord.getCreatedByUserId())
+                .eq(Document::getId, documentRecord.getId())
+                .set(Document::getContentText, content)
+                .set(Document::getPageCount, pageCount)
+                .set(Document::getStatus, DocumentStatus.COMPLETED);
+        update(luw);
     }
 
     private void cleanupTempFileSimple(Path tempFile) {

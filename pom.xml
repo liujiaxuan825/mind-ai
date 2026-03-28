@@ -66,12 +66,12 @@
     <modules>
         <module>mind-common</module>
 <!--        <module>mind-cloud-starter</module>-->
-<!--        <module>mind-gateway</module>-->
         <module>mind-user-service</module>
         <module>mind-file-service</module>
         <module>mind-ai-service</module>
         <module>mind-search-service</module>
         <module>mind-upload-service</module>
+        <module>mind-gateway-service</module>
     </modules>
 
     <!-- 依赖管理 -->

@@ -18,7 +18,7 @@ thread:
       thread-name-prefix: bloom-  # 线程名前缀（日志排查用）
       businessAwaitTerminationSeconds: 300
 server:
-  port: 8082
+  port: 8083
   servlet:
     context-path: /api
 spring:
@@ -29,3 +29,9 @@ spring:
       discovery:
         server-addr: localhost:8848
         namespace: ""
+# JWT配置
+jwt:
+  secret: "bWluZC1haS1qd3Qtc2VjcmV0LWtleS0yMDI1LXNwcmluZy1ib290LTMtc2VjdXJpdHktdG9rZW4tbWFuYWdlbWVudC1zeXN0ZW0tYWR2YW5jZWQtdmVyc2lvbg=="
+  expiration: 604800000  # 7天，单位毫秒
+  token-prefix: "Bearer "
+  header: "Authorization"

@@ -1,14 +1,11 @@
 package com.liu.ai.config.retrievalAugmentor;
 
-import com.liu.common.mind.config.UserContextHolder;
+import com.liu.common.untils.UserContext;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.chat.ChatModel;
-import dev.langchain4j.model.cohere.CohereScoringModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.rag.DefaultRetrievalAugmentor;
 import dev.langchain4j.rag.RetrievalAugmentor;
-import dev.langchain4j.rag.content.aggregator.ContentAggregator;
-import dev.langchain4j.rag.content.aggregator.ReRankingContentAggregator;
 import dev.langchain4j.rag.content.injector.ContentInjector;
 import dev.langchain4j.rag.content.injector.DefaultContentInjector;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
@@ -47,7 +44,7 @@ public class RagComponentConfig {
     @Bean
     public ContentRetriever createContentRetriever() {
         Function<Query, Filter> userIdFilter = (query)->{
-            Long userId = UserContextHolder.getCurrentUserId();
+            Long userId = UserContext.getUserId();
             if(userId == null){
                 return null;
             }

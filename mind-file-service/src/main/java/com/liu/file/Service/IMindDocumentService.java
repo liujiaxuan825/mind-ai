@@ -3,9 +3,9 @@ package com.liu.file.Service;
 import com.liu.file.domain.Entity.Document;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.liu.file.domain.VO.DocumentVO;
-import com.liu.common.mind.common.Result;
-import com.liu.common.mind.common.page.PageRequestDTO;
-import com.liu.common.mind.common.page.PageResultVO;
+import com.liu.common.common.Result;
+import com.liu.common.common.page.PageRequestDTO;
+import com.liu.common.common.page.PageResultVO;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -29,4 +29,6 @@ public interface IMindDocumentService extends IService<Document> {
     Result<Long> countDocumentNum();
 
     void DocParse(Document documentRecord);
+
+    Result<String> reDocParse(Long docId);
 }

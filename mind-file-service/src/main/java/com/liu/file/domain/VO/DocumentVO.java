@@ -29,6 +29,6 @@ public class DocumentVO {
     /**
      * 摘要，状态正确展示内容的一部分，错误是显示错误信息，其他状态不展示
      */
-    private String content;
+    private String contentText;
 
 }

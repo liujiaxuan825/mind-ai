@@ -1,6 +1,6 @@
 package com.liu.file.Bloom;
 
-import com.liu.common.mind.infer.BloomDataProvider;
+import com.liu.common.infer.BloomDataProvider;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;

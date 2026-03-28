@@ -2,9 +2,7 @@ package com.liu.ai.controller;
 
 
 import com.liu.ai.config.AiServiceConfig.ChatAssistant;
-import com.liu.common.mind.config.UserContextHolder;
 import dev.langchain4j.service.TokenStream;
-import dev.langchain4j.service.UserMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,7 +28,7 @@ public class MindChatHistoryController {
 
     @GetMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public TokenStream chat(@RequestParam("ask") String ask){
-//        String memoryId ;
+        String memoryId ;
         return chatAssistant.chat("1", ask);
     }
 }

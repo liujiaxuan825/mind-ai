@@ -8,28 +8,28 @@ import lombok.Getter;
  */
 @Getter
 public enum DocumentStatus {
-    PENDING(0, "等待上传", "创建记录但文件未上传"),
+    PENDING("0", "等待上传", "创建记录但文件未上传"),
     
-    UPLOADED(1, "已上传", "文件已上传，等待解析"),
+    UPLOADED("1", "已上传", "文件已上传，等待解析"),
     
-    PARSING(2, "解析中", "正在使用Apache Tika解析文档内容"),
+    PARSING("2", "解析中", "正在解析文档内容"),
     
-    COMPLETED(3, "解析完成", "文档解析完成，内容可用"),
-    
-    FAILED(4, "解析失败", "文档解析失败");
+    COMPLETED("3", "解析完成", "文档解析完成，内容可用"),
+
+    FAILED("4", "解析失败", "文档解析失败");
 
     @EnumValue
-    private final Integer code;
+    private final String code;
     private final String description;
     private final String detail;
 
-    DocumentStatus(Integer code, String description, String detail) {
+    DocumentStatus(String code, String description, String detail) {
         this.code = code;
         this.description = description;
         this.detail = detail;
     }
 
-    public Integer getCode() {
+    public String getCode() {
         return code;
     }
 
@@ -41,7 +41,7 @@ public enum DocumentStatus {
         return detail;
     }
 
-    public static DocumentStatus getByCode(Integer code) {
+    public static DocumentStatus getByCode(String code) {
         if (code == null) {
             return null;
         }
@@ -56,32 +56,32 @@ public enum DocumentStatus {
     /**
      * 检查code是否有效
      */
-    public static boolean isValid(Integer code) {
+    public static boolean isValid(String code) {
         return getByCode(code) != null;
     }
 
     /**
      * 检查状态是否可进行解析
      */
-    public static boolean canParse(Integer code) {
+    public static boolean canParse(String code) {
         DocumentStatus status = getByCode(code);
-        return status != null && (status == UPLOADED || status == FAILED);
+        return (status == UPLOADED || status == FAILED);
     }
 
     /**
      * 检查状态是否为最终状态
      */
-    public static boolean isFinal(Integer code) {
+    public static boolean isFinal(String code) {
         DocumentStatus status = getByCode(code);
-        return status != null && (status == COMPLETED || status == FAILED);
+        return (status == COMPLETED || status == FAILED);
     }
 
     /**
      * 检查状态是否正在处理中
      */
-    public static boolean isProcessing(Integer code) {
+    public static boolean isProcessing(String code) {
         DocumentStatus status = getByCode(code);
-        return status != null && status == PARSING;
+        return status == PARSING;
     }
 
     /**
@@ -91,7 +91,7 @@ public enum DocumentStatus {
         DocumentStatus[] values = values();
         Integer[] codes = new Integer[values.length];
         for (int i = 0; i < values.length; i++) {
-            codes[i] = values[i].getCode();
+            codes[i] = Integer.valueOf(values[i].getCode());
         }
         return codes;
     }

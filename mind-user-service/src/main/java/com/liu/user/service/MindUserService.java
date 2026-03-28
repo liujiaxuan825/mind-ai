@@ -1,6 +1,6 @@
 package com.liu.user.service;
 
-import com.liu.common.mind.common.Result;
+import com.liu.common.common.Result;
 import com.liu.user.domain.dto.UserLoginDTO;
 import com.liu.user.domain.dto.UserRegisterDTO;
 import com.liu.user.domain.entity.User;

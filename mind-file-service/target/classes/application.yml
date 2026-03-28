@@ -38,6 +38,11 @@ spring:
       static-locations: classpath:/static/
       add-mappings: true
   rabbitmq:
+    host: 127.0.0.1          # MQ 地址
+    port: 5672              # 端口
+    username: guest         # 默认用户名
+    password: guest         # 默认密码
+    virtual-host: /         # 默认虚拟主机
     listener:
       simple:
         retry:
@@ -62,13 +67,14 @@ mybatis-plus:
       logic-delete-field: deleted
       logic-delete-value: 1
       logic-not-delete-value: 0
-  type-enums-package: com.liu.user.enumsPack
+  type-enums-package: com.liu.file.domain.enumsPack
 
 # 应用配置
 server:
-  port: 8081
+  port: 8082
   servlet:
     context-path: /api
+  address: 0.0.0.0
 aliyun:
   oss:
     endpoint: oss-cn-beijing.aliyuncs.com

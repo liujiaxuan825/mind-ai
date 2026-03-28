@@ -5,7 +5,7 @@ import com.liu.file.Service.IMindDocumentService;
 import com.liu.file.Service.IMindKnowledgeService;
 import com.liu.file.domain.Entity.Document;
 import com.liu.file.domain.Entity.Knowledge;
-import com.liu.common.mind.infer.BloomDataProvider;
+import com.liu.common.infer.BloomDataProvider;
 import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;

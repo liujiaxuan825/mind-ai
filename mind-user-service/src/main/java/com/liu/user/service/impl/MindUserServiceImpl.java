@@ -1,6 +1,7 @@
 package com.liu.user.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.liu.common.untils.UserContext;
 import com.liu.user.domain.dto.UserLoginDTO;
 import com.liu.user.domain.dto.UserRegisterDTO;
 import com.liu.user.domain.entity.User;
@@ -8,15 +9,15 @@ import com.liu.user.domain.vo.UserLoginVO;
 import com.liu.user.domain.vo.UserVO;
 import com.liu.user.enumsPack.UserStatus;
 
-import com.liu.common.mind.common.Result;
-import com.liu.common.mind.config.JwtUtils;
-import com.liu.common.mind.config.UserContextHolder;
-import com.liu.common.mind.exception.BusinessException;
+import com.liu.common.common.Result;
+import com.liu.common.untils.JwtUtils;
+import com.liu.common.exception.BusinessException;
 
-import com.liu.common.mind.service.TokenBlacklistService;
+import com.liu.common.service.TokenBlacklistService;
 import com.liu.user.service.MindUserService;
 import com.liu.user.mapper.MindUserMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
@@ -31,6 +32,7 @@ import java.time.LocalDateTime;
 */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MindUserServiceImpl extends ServiceImpl<MindUserMapper, User> implements MindUserService {
 
     private final JwtUtils jwtUtils;
@@ -95,7 +97,7 @@ public class MindUserServiceImpl extends ServiceImpl<MindUserMapper, User> imple
 
     @Override
     public Result<UserVO> getMe() {
-        Long userId = UserContextHolder.getCurrentUserId();
+        Long userId = UserContext.getUserId();
         User user = getById(userId);
         if (user == null) {
             return null;
@@ -107,7 +109,7 @@ public class MindUserServiceImpl extends ServiceImpl<MindUserMapper, User> imple
 
     @Override
     public Result<Void> logout() {
-        String token = UserContextHolder.getUserContext().getToken();
+        String token = UserContext.getToken();
         if(token == null){
             return Result.error("令牌不存在！");
         }
