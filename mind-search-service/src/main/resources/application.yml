@@ -22,16 +22,26 @@ spring:
       static-locations: classpath:/static/
       add-mappings: true
   rabbitmq:
+    host: 127.0.0.1          # MQ 地址
+    port: 5672              # 端口
+    username: guest         # 默认用户名
+    password: guest         # 默认密码
+    virtual-host: /         # 默认虚拟主机
     listener:
       simple:
         retry:
-          enabled: true
-          max-attempts: 3
-          initial-interval: 2000    # 2秒
-          multiplier: 2.0           # 指数退避：2s, 4s, 8s
-          max-interval: 10000       # 最大间隔10秒
+          enabled: false
+        acknowledge-mode: manual # 手动确认消息
+    publisher-confirm-type: correlated #开启消息确认机制
+    publisher-returns: true #开启消息退回机制
+    template:
+      mandatory: true
+
   elasticsearch:
     uris: http://localhost:19200
+    restclient:
+      ssl:
+        verification: none
 # MyBatis-Plus配置
 mybatis-plus:
   configuration:
@@ -48,31 +58,10 @@ mybatis-plus:
 
 # 应用配置
 server:
-  port: 8083
+  port: 8084
   servlet:
     context-path: /api
 logging:
   level:
     com.yourname: debug
     org.springframework.web: info
-
-aliyun:
-  oss:
-    endpoint: oss-cn-beijing.aliyuncs.com
-    # 访问凭证AccessKey (非常重要！不要泄露)
-    access-key-id: ${OSS_ACCESS_KEY_ID:}
-    access-key-secret: ${OSS_ACCESS_KEY_SECRET:}
-    # 存储桶名称 (你在OSS控制台创建的Bucket名字)
-    bucket-name: liujiaxuan-mind-ai
-    # 自定义配置：文件访问URL的前缀（可选，但推荐）
-    url-prefix: https://${aliyun.oss.bucket-name}.${aliyun.oss.endpoint}/
-
-thread:
-  pool:
-    bloom:
-      core-size: 5        # 核心线程数（4核8G服务器推荐：CPU核数+1）
-      max-size: 10        # 最大线程数（核心数*2）
-      queue-size: 1000    # 任务队列容量（有界，避免OOM）
-      keep-alive-seconds: 60  # 空闲线程存活时间
-      thread-name-prefix: bloom-  # 线程名前缀（日志排查用）
-      businessAwaitTerminationSeconds: 300

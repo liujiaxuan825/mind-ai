@@ -1,4 +1,4 @@
-package com.liu.ai.config.ChatMemoryConfig;
+package com.liu.ai.aiConfig.ChatMemoryConfig;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.liu.ai.domain.entity.ChatHistory;

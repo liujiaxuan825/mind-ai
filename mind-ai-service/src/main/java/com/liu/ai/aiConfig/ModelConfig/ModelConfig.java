@@ -1,4 +1,4 @@
-package com.liu.ai.config.ModelConfig;
+package com.liu.ai.aiConfig.ModelConfig;
 
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;

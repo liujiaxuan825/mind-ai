@@ -30,10 +30,11 @@ public class ListenDocParse {
     @RabbitListener(queues = MqConstant.QUEUE_DOCUMENT_PARSE)
     public void listenDocParse(Document documentRecord, Channel channel, Message message) throws IOException {
         log.info("收到文档解析消息: {}", documentRecord);
+        long tag = message.getMessageProperties().getDeliveryTag();
         if (documentRecord == null) {
+            channel.basicAck(tag, false);
             return;
         }
-        long tag = message.getMessageProperties().getDeliveryTag();
         String key = "mq_doc_parse_" + documentRecord.getId().toString();
         try {
             iDocumentService.DocParse(documentRecord);

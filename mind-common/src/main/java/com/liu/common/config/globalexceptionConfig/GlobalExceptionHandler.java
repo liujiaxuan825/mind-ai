@@ -8,19 +8,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 
 @Slf4j
-@ControllerAdvice
+@RestControllerAdvice
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class GlobalExceptionHandler {
-    
-    @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<Result<?>> handleNoResourceFound(NoResourceFoundException e) {
-        log.warn("请求路径不存在: {}", e.getResourcePath());
+
+    @ExceptionHandler(NoHandlerFoundException.class)
+    public ResponseEntity<Result<?>> handleNoHandlerFound(NoHandlerFoundException e) {
+        log.warn("请求路径不存在: {}", e.getRequestURL());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Result.error("请求路径不存在: " + e.getResourcePath()));
+                .body(Result.error("请求路径不存在"));
     }
     @ExceptionHandler(BusinessException.class)
     public Result<Void> handleBusinessException(BusinessException e) {

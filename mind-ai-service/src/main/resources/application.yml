@@ -1,5 +1,5 @@
 server:
-  port: 8084
+  port: 8085
   servlet:
     context-path: /api
 spring:
@@ -22,6 +22,18 @@ spring:
     resources:
       static-locations: classpath:/static/
       add-mappings: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+    listener:
+      simple:
+        retry:
+          enabled: false
+        acknowledge-mode: manual
+
 aliyun:
   oss:
     endpoint: oss-cn-beijing.aliyuncs.com

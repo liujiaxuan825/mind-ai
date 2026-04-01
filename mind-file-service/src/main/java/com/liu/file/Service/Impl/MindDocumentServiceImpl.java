@@ -127,6 +127,8 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
         String url = mindDocumentMapper.selectDocFileKey(docId, UserContext.getUserId());
         String lastUrl = url.replaceFirst("^https?://.*?\\.aliyuncs\\.com/", "");
         aliyunOssUtil.deleteFile(lastUrl);
+
+
         remove(lqw);
     }
 
@@ -204,8 +206,11 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
             // 5. 把数据一同存入es当中,为全文检索做准备
             documentRecord.setContentText(content);
             documentRecord.setPageCount(pageCount);
-            rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_SAVE, MqConstant.ROUT_KEY_DOCUMENT_SAVE, documentRecord, new CorrelationData(documentRecord.getId().toString()));
+            rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_PARSE, MqConstant.ROUT_KEY_DOCUMENT_SAVE,
+                    documentRecord, new CorrelationData(documentRecord.getId().toString()));
 
+            rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_PARSE, MqConstant.ROUT_KEY_DOCUMENT_MILVUS,
+                    documentRecord, new CorrelationData(documentRecord.getId().toString()));
         } catch (Exception e) {
             log.error("文档解析/es写入失败，文档ID: {}", documentRecord.getId(), e);
             throw new BusinessException("文档解析/es写入失败!");

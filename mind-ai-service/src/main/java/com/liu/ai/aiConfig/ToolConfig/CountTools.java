@@ -1,4 +1,4 @@
-package com.liu.ai.config.ToolConfig;
+package com.liu.ai.aiConfig.ToolConfig;
 
 import dev.langchain4j.agent.tool.Tool;
 

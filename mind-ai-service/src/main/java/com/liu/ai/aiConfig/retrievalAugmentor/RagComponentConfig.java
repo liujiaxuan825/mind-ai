@@ -1,4 +1,4 @@
-package com.liu.ai.config.retrievalAugmentor;
+package com.liu.ai.aiConfig.retrievalAugmentor;
 
 import com.liu.common.untils.UserContext;
 import dev.langchain4j.data.segment.TextSegment;
@@ -80,7 +80,7 @@ public class RagComponentConfig {
     @Bean
     public ContentInjector createContentInjector(){
         return DefaultContentInjector.builder()
-                .metadataKeysToInclude(List.of("file_name", "index"))
+                .metadataKeysToInclude(List.of("title"))
                 .build();
     }
 

@@ -1,6 +1,5 @@
-package com.liu.ai.config.guardrailsConfig;
+package com.liu.ai.aiConfig.guardrailsConfig;
 
-import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.guardrail.GuardrailRequestParams;

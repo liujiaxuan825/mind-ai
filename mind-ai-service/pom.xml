@@ -189,5 +189,11 @@
             <artifactId>langchain4j-cohere</artifactId>
             <version>0.36.2</version> <!-- 请保持与 langchain4j 核心版本一致 -->
         </dependency>
+        <dependency>
+            <groupId>com.yourname</groupId>
+            <artifactId>mind-file-service</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 </project>

@@ -1,4 +1,4 @@
-package com.liu.ai.config.Milvus;
+package com.liu.ai.aiConfig.Milvus;
 
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.store.embedding.EmbeddingStore;
@@ -14,8 +14,8 @@ public class EmbeddingStoreConfig {
         return MilvusEmbeddingStore.builder()
                 .host("localhost")
                 .port(19530)
-                .collectionName("ChatHistory")
-                .dimension(1536)
+                .collectionName("document_embedding")
+                .dimension(1024)
                 .build();
     }
 

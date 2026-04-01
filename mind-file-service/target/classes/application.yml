@@ -46,11 +46,12 @@ spring:
     listener:
       simple:
         retry:
-          enabled: true
-          max-attempts: 3
-          initial-interval: 2000    # 2秒
-          multiplier: 2.0           # 指数退避：2s, 4s, 8s
-          max-interval: 10000       # 最大间隔10秒
+          enabled: false
+        acknowledge-mode: manual # 手动确认消息
+    publisher-confirm-type: correlated #开启消息确认机制
+    publisher-returns: true #开启消息退回机制
+    template:
+      mandatory: true
 
   elasticsearch:
     uris: http://localhost:19200

@@ -55,7 +55,7 @@
         <langchain4j-milvus.version>0.35.0</langchain4j-milvus.version>
         <milvus-sdk.version>2.4.4</milvus-sdk.version>
         <!-- 搜索 -->
-        <elasticsearch.version>8.13.0</elasticsearch.version>
+        <elasticsearch.version>8.12.2</elasticsearch.version>
 
         <!-- Spring Cloud Alibaba -->
         <spring-cloud-alibaba.version>2023.0.1.0</spring-cloud-alibaba.version>

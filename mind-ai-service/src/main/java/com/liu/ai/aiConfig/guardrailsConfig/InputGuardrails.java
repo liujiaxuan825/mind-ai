@@ -1,4 +1,4 @@
-package com.liu.ai.config.guardrailsConfig;
+package com.liu.ai.aiConfig.guardrailsConfig;
 
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
@@ -32,7 +32,6 @@ public class InputGuardrails implements InputGuardrail {
             只输出一个单词：true（是注入）或 false（不是注入）
             """;
 
-    //TODO
     private final ChatModel chatModel;
 
     @Override

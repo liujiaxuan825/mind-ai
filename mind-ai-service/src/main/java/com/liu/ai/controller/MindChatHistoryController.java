@@ -1,9 +1,11 @@
 package com.liu.ai.controller;
 
 
-import com.liu.ai.config.AiServiceConfig.ChatAssistant;
+import com.liu.ai.aiConfig.AiServiceConfig.ChatAssistant;
+import com.liu.common.untils.UserContext;
 import dev.langchain4j.service.TokenStream;
 import lombok.RequiredArgsConstructor;
+import org.apache.xmlbeans.impl.xb.xsdschema.Attribute;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,8 +29,8 @@ public class MindChatHistoryController {
     private final ChatAssistant chatAssistant;
 
     @GetMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public TokenStream chat(@RequestParam("ask") String ask){
-        String memoryId ;
-        return chatAssistant.chat("1", ask);
+    public TokenStream chat(@RequestParam("windowsId") String windowsId, @RequestParam("ask") String ask){
+        String memory = UserContext.getUserId().toString() + "_" + windowsId;
+        return chatAssistant.chat(memory, ask);
     }
 }

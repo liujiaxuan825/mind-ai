@@ -10,7 +10,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
  *
  *
  */
-@SpringBootApplication(scanBasePackages = {"com.liu.search", "com.liu.file"})
+@SpringBootApplication(scanBasePackages = {"com.liu.search", "com.liu.common"})
 @EnableDiscoveryClient
 @EnableFeignClients
 public class SearchApplication

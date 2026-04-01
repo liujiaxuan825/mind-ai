@@ -29,6 +29,11 @@ public class EsDocumentSearchVO {
      */
     private List<String> highlightContent;
 
+    /**
+     * 当前文档有处与关键词相符合的内容
+     */
+    private Long matchCount;
+
 
     /**
      * 用于实现滑动分页的游标标识

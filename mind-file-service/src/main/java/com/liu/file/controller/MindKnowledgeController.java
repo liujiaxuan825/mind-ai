@@ -2,6 +2,7 @@ package com.liu.file.controller;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.liu.file.Service.IKnowledgeCacheService;
 import com.liu.file.Service.IMindKnowledgeService;
 import com.liu.file.domain.DTO.KnowledgeDTO;
 import com.liu.file.domain.Entity.Knowledge;
@@ -26,7 +27,10 @@ import java.util.List;
 @RequestMapping("/knowledge")
 @RequiredArgsConstructor
 public class MindKnowledgeController {
+    
     private final IMindKnowledgeService mindKnowledgeService;
+    
+    private final IKnowledgeCacheService knowledgeCacheService;
 
     @PostMapping("/add")
     public Result<Void> createKnowledge(@RequestBody KnowledgeDTO knowledgeDTO){
@@ -59,9 +63,9 @@ public class MindKnowledgeController {
     /**
      * 微服务暴露接口
      */
-    @GetMapping("/list")
-    public List<Knowledge> list(@RequestParam LambdaQueryWrapper<Knowledge> queryWrapper){
-        return mindKnowledgeService.list(queryWrapper);
+    @PostMapping("/list")
+    public List<KnowledgeVO> list(@RequestBody List<Long> kbId){
+        return knowledgeCacheService.getKnowledgeList(kbId);
     }
 
 }

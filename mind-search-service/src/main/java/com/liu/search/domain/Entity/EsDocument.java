@@ -10,18 +10,18 @@ import java.time.LocalDateTime;
 
 /**
  * Elasticsearch 文档实体类
- * 对应索引：knowledge_docs (你的知识库文档索引)
+ * 对应索引：document_docs (你的文档索引)
  * 核心职责：定义Java对象与ES索引之间的映射规则
  */
 @Data
-@Document(indexName = "knowledge_docs",createIndex = false)
+@Document(indexName = "document_docs",createIndex = false)
 @Setting(settingPath = "/es-settings/ik-pinyin-setting.json")
 public class EsDocument {
     /**
      *唯一标识
      */
     @Id
-    private Long id;
+    private String id;
 
     /**
      *文档标题
@@ -35,6 +35,11 @@ public class EsDocument {
     @Field(type = FieldType.Text , analyzer = "ik_max_word", searchAnalyzer = "ik_smart")
     private String content;
 
+    /**
+     * 原始文档id
+     */
+    @Field(type = FieldType.Keyword)
+    private String originalDocId;
     /**
      *文档作者
      */

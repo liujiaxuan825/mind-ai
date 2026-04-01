@@ -1,4 +1,4 @@
-package com.liu.ai.config.RagConfig;
+package com.liu.ai.aiConfig.RagConfig;
 
 import com.liu.common.untils.UserContext;
 import dev.langchain4j.data.document.Document;
@@ -23,16 +23,13 @@ public class EmbeddingConfig {
     public EmbeddingStoreIngestor createEsi(){
         return EmbeddingStoreIngestor.builder()
                 .documentTransformer(doc ->{
-                    String userId = String.valueOf(UserContext.getUserId());
-                    Metadata metadata = doc.metadata();
-                    metadata.put("userId", userId);
                     String text = doc.text().replaceAll("\\n{3,}", "\n\n");
-                    return Document.from(text, metadata);
+                    return Document.from(text);
                 })
-                .documentSplitter(DocumentSplitters.recursive(500, 100))
+                .documentSplitter(DocumentSplitters.recursive(300, 30))
                 .textSegmentTransformer(seg ->{
-                    String filename = seg.metadata().getString("file_name");
-                    String userId = seg.metadata().getString("user_id");
+                    String filename = seg.metadata().getString("title");
+                    String userId = seg.metadata().getString("userId");
                     String text = "[来源文档：" + filename + "]（所属用户：" + userId + "）\n" + seg.text();
                     return TextSegment.from(text, seg.metadata());
                 })

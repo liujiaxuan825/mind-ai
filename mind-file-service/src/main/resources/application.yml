@@ -46,7 +46,7 @@ spring:
     listener:
       simple:
         retry:
-          enabled: false # 禁用重试机制
+          enabled: false
         acknowledge-mode: manual # 手动确认消息
     publisher-confirm-type: correlated #开启消息确认机制
     publisher-returns: true #开启消息退回机制

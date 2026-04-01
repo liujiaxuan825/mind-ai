@@ -1,5 +1,6 @@
 package com.liu.search.domain.DTO;
 
+import com.liu.common.common.page.PageRequestDTO;
 import lombok.Data;
 
 @Data
@@ -11,8 +12,8 @@ public class GlobalSearchDTO {
     private String keyWord;
 
     /**
-     * 知识库权限
+     * 分页参数
      */
-    private String filter;
+    private PageRequestDTO page;
 
 }
