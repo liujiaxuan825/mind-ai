@@ -85,6 +85,11 @@ public class Document implements Serializable {
     private Long createdByUserId;
 
     /**
+     * 是否删除
+     */
+    private Integer isDeleted;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createdTime;

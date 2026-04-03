@@ -4,6 +4,9 @@ import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.liu.common.common.constant.RedisConstant;
+import com.liu.common.config.redisConfig.StringRedisTemplateConfig;
 import com.liu.common.untils.UserContext;
 import com.liu.file.Service.IDocumentCacheService;
 import com.liu.file.config.RabbitMqSendUtil;
@@ -28,6 +31,7 @@ import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,6 +77,10 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
 
     private final MindDocumentMapper mindDocumentMapper;
 
+    private final StringRedisTemplateConfig.RedisCacheUtils redisCacheUtils;
+
+    private final Cache<String, DocumentVO> documentCache;
+
 
     @Override
     public Result<String> addDocument(Long klId, MultipartFile file) {
@@ -98,7 +106,8 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
     public Result<PageResultVO<DocumentVO>> pageSelect(PageRequestDTO page, Long kbId) {
         LambdaQueryWrapper<Document> lqw = new LambdaQueryWrapper<>();
         lqw.eq(Document::getKnowledgeId, kbId)
-                .eq(Document::getCreatedByUserId, UserContext.getUserId());
+                .eq(Document::getCreatedByUserId, UserContext.getUserId())
+                .eq(Document::getIsDeleted, 0);
         Page<Document> pageResult = page(page.toMpPage(), lqw);
         List<DocumentVO> docList = pageResult.getRecords().stream().map(item -> BeanUtil.copyProperties(item, DocumentVO.class)).toList();
         PageResultVO<DocumentVO> result = PageResultVO.success(docList, pageResult.getTotal(), page);
@@ -108,28 +117,67 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
 
     @Override
     public Result<DocumentVO> getDocument(Long docId) {
-        LambdaQueryWrapper<Document> lqw = new LambdaQueryWrapper<>();
-        lqw.eq(Document::getId, docId)
-        .eq(Document::getCreatedByUserId,UserContext.getUserId());
-        Document document = getOne(lqw);
-        DocumentVO documentVO = BeanUtil.copyProperties(document, DocumentVO.class);
-        return Result.success(documentVO);
+        return Result.success(documentCacheService.getDocument(docId));
     }
 
 
     @Override
     public void deleteDocument(Long docId) {
-        //删除数据库记录
-        LambdaQueryWrapper<Document> lqw = new LambdaQueryWrapper<>();
+        Long userId = UserContext.getUserId();
+        //1.删除前校验
+        Document document = getById(docId);
+        if (document == null || document.getIsDeleted() == 1) {
+            throw new BusinessException("文档不存在或已被删除");
+        }
+
+        //2.添加禁用缓存标记
+        String cacheKey = RedisConstant.DOCUMENT_CACHE_DISABLE + userId + "_" + docId;
+        redisCacheUtils.setWithRandomExpire(cacheKey, "1", RedisConstant.DOCUMENT_CACHE_DISABLE_TTL);
+        log.info("缓存禁用标记设置成功，docId: {}", docId);
+
+        //3.删除文档redis缓存
+        String key = RedisConstant.DOCUMENT_ID + userId + "_" + docId;
+        documentCacheService.deleteCountNum();
+        redisCacheUtils.delete(key);
+        log.info("文档redis缓存第一次删除成功，docId: {}", docId);
+
+        //4.删除本地缓存
+        documentCache.invalidate(docId.toString());
+
+        //5.软删除DB中文档记录
+        doDeleteTransaction(docId);
+
+        //6.延迟双删redis中的缓存
+        redisCacheUtils.delete(key);
+
+        //7.延迟双删本地缓存
+        documentCache.invalidate(docId.toString());
+
+        //8.发送延迟删除消息（终极兜底方案）
+        rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_REDIS_CACHE_DELETE,
+                MqConstant.ROUT_KEY_DOCUMENT_REDIS_CACHE_DELETE, document, new CorrelationData(docId.toString()));
+
+        //9.发送删除消息至es，向量数据库，oss存储
+        rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_ES_MILVUS_OSS_DELETE,
+                MqConstant.ROUT_KEY_DOCUMENT_ES_DELETE, document , new CorrelationData(docId.toString()));
+
+        rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_ES_MILVUS_OSS_DELETE,
+                MqConstant.ROUT_KEY_DOCUMENT_MILVUS_DELETE, document , new CorrelationData(docId.toString()));
+
+        rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_ES_MILVUS_OSS_DELETE,
+                MqConstant.ROUT_KEY_DOCUMENT_OSS_DELETE, document , new CorrelationData(docId.toString()));
+    }
+
+    private void doDeleteTransaction(Long docId) {
+        //1.软删除DB中文档记录
+        LambdaUpdateWrapper<Document> lqw = new LambdaUpdateWrapper<>();
         lqw.eq(Document::getId, docId)
-                .eq(Document::getCreatedByUserId,UserContext.getUserId());
-        //删除阿里云文件
-        String url = mindDocumentMapper.selectDocFileKey(docId, UserContext.getUserId());
-        String lastUrl = url.replaceFirst("^https?://.*?\\.aliyuncs\\.com/", "");
-        aliyunOssUtil.deleteFile(lastUrl);
-
-
-        remove(lqw);
+                .eq(Document::getIsDeleted, 0)
+                .eq(Document::getCreatedByUserId, UserContext.getUserId())
+                .set(Document::getUpdatedTime, LocalDateTime.now())
+                .set(Document::getIsDeleted, 1);
+        this.update(lqw);
+        //2.
     }
 
 
@@ -143,7 +191,7 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
     //异步处理解析文件
     private void triggerDocumentParse(Document documentRecord) {
         log.info("触发文档异步解析，文档ID: {}", documentRecord.getId());
-        rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_PARSE, MqConstant.ROUT_KEY_DOCUMENT_PARSE,
+        rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_PARSE_ES_MILVUS, MqConstant.ROUT_KEY_DOCUMENT_PARSE,
                         documentRecord, new CorrelationData(documentRecord.getId().toString()));
     }
 
@@ -206,10 +254,10 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
             // 5. 把数据一同存入es当中,为全文检索做准备
             documentRecord.setContentText(content);
             documentRecord.setPageCount(pageCount);
-            rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_PARSE, MqConstant.ROUT_KEY_DOCUMENT_SAVE,
+            rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_PARSE_ES_MILVUS, MqConstant.ROUT_KEY_DOCUMENT_SAVE,
                     documentRecord, new CorrelationData(documentRecord.getId().toString()));
 
-            rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_PARSE, MqConstant.ROUT_KEY_DOCUMENT_MILVUS,
+            rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_PARSE_ES_MILVUS, MqConstant.ROUT_KEY_DOCUMENT_MILVUS,
                     documentRecord, new CorrelationData(documentRecord.getId().toString()));
         } catch (Exception e) {
             log.error("文档解析/es写入失败，文档ID: {}", documentRecord.getId(), e);

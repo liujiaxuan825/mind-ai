@@ -128,7 +128,3 @@ public class MindUserServiceImpl extends ServiceImpl<MindUserMapper, User> imple
     }
 
 }
-
-
-
-

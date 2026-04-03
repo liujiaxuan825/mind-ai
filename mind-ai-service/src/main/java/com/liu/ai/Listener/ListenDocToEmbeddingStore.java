@@ -14,6 +14,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -37,6 +38,7 @@ public class ListenDocToEmbeddingStore {
         metadata.put("title", document.getName());
         metadata.put("userId", String.valueOf(document.getCreatedByUserId()));
         metadata.put("knowledgeId", document.getKnowledgeId());
+        metadata.put("createdTime", document.getCreatedTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         try {
             ingestor.ingest(embeddingDocument);
             channel.basicAck(tag, false);

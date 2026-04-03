@@ -33,4 +33,5 @@ public class MindChatHistoryController {
         String memory = UserContext.getUserId().toString() + "_" + windowsId;
         return chatAssistant.chat(memory, ask);
     }
+
 }

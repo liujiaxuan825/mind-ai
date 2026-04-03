@@ -24,7 +24,13 @@ public class EmbeddingConfig {
         return EmbeddingStoreIngestor.builder()
                 .documentTransformer(doc ->{
                     String text = doc.text().replaceAll("\\n{3,}", "\n\n");
-                    return Document.from(text);
+                    Metadata metadata = doc.metadata();
+                    metadata.put("documentId", metadata.getString("documentId"));
+                    metadata.put("title", metadata.getString("title"));
+                    metadata.put("userId", metadata.getString("userId"));
+                    metadata.put("knowledgeId", metadata.getString("knowledgeId"));
+                    metadata.put("createdTime", metadata.getString("createdTime"));
+                    return Document.from(text, metadata);
                 })
                 .documentSplitter(DocumentSplitters.recursive(300, 30))
                 .textSegmentTransformer(seg ->{

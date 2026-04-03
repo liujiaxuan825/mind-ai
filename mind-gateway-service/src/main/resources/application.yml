@@ -37,6 +37,12 @@ spring:
             - Path=/api/search/**
           filters:
             - StripPrefix=0
+        - id: mind-ai-service
+          uri: lb://mind-ai-service
+          predicates:
+            - Path=/api/ai/**
+          filters:
+            - StripPrefix=0
   main:
     web-application-type: reactive
 # JWT配置

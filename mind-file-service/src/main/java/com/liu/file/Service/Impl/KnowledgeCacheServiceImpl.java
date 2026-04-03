@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
+import com.liu.common.exception.BusinessException;
 import com.liu.common.untils.UserContext;
 import com.liu.file.Service.IKnowledgeCacheService;
 import com.liu.file.domain.Entity.Knowledge;
@@ -49,8 +50,7 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
         Long userId = UserContext.getUserId();
         String key = RedisConstant.KNOWLEDGE_ID + userId + "_" + id;
 
-        String lockKey = "KnowledgeIds:" + id + userId;
-        RLock lock = redissonClient.getLock(lockKey);
+
 
         //1.先查询布隆过滤器是否存在数据
         boolean contain = knowledgeBloom.isKnowledgeContain(id);
@@ -67,27 +67,31 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
 
         //3.redis的查询
         boolean locked = false;
+        String lockKey = "KnowledgeIds:" + id + "_" + userId;
+        RLock lock = redissonClient.getLock(lockKey);
         try {
             KnowledgeVO knowledgeVO = redisCacheUtils.get(key, KnowledgeVO.class);
             if(knowledgeVO != null){
                 log.info("命中redis缓存,返回数据");
-                knowledgeVOLocalCache.put(key, knowledgeVO);
+                knowledgeVOLocalCache.put(id.toString(), knowledgeVO);
                 return knowledgeVO;
             }
 
 
             KnowledgeVO vo = null;
             //4.数据库查询
-            boolean tryLock = lock.tryLock(30, 5, TimeUnit.SECONDS);
+            boolean tryLock = lock.tryLock(30, TimeUnit.SECONDS);
             locked = tryLock;
             if(!tryLock){
                 log.warn("获取分布式锁失败，知识库ID：{}", id);
                 Thread.sleep(100);
                 vo = redisCacheUtils.get(key,KnowledgeVO.class);
                 if(vo!=null){
+                    log.info("其他线程完成写回，redis命中知识库缓存，并写回本地缓存，知识库ID：{}", id);
                     knowledgeVOLocalCache.put(id.toString(),vo);
                     return vo;
                 }
+                throw new BusinessException("系统繁忙，请稍后重试");
             }
 
             log.info("获取分布式锁成功，知识库ID：{}", id);
@@ -111,11 +115,14 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
             redisCacheUtils.setWithRandomExpire(key,resultVo,RedisConstant.KNOWLEDGE_ID_TTL);
             return resultVo;
 
+        } catch (BusinessException e) {
+            log.warn("业务处理警告，knowledgeId={}, msg={}", id, e.getMessage());
+            throw e;
         } catch (Exception e) {
-            log.error("redis缓存失败，{}",e);
+            log.error("redis缓存查询失败",e);
             return BeanUtil.copyProperties(getById(id),KnowledgeVO.class);
         }finally {
-            if (locked) {
+            if (locked && lock.isHeldByCurrentThread()) {
                 lock.unlock();
             }
         }

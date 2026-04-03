@@ -6,5 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public interface EsDocumentRepository extends ElasticsearchRepository<EsDocument, String> {
-    
+
+    void deleteByOriginalDocId(String originalDocId);
+
 }
