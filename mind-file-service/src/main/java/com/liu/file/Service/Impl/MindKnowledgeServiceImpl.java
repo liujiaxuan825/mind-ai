@@ -24,12 +24,15 @@ import com.liu.common.common.page.PageResultVO;
 import com.liu.common.config.redisConfig.StringRedisTemplateConfig;
 import com.liu.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 /**
@@ -58,42 +61,47 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
     @Lazy
     private final KnowledgeBloomFilterManager  knowledgeBloomFilterManager;
 
+    @Autowired
+    private MindKnowledgeServiceImpl knowledgeServiceProxy;
+
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void addKnowledge(KnowledgeDTO knowledgeDTO) {
-        Long userId = UserContext.getUserId();
-
-        //判断知识库的唯一
-        LambdaQueryWrapper<Knowledge> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Knowledge::getUserId, userId)
-                .eq(Knowledge::getName, knowledgeDTO.getName());
-        List<Knowledge> list = list(queryWrapper);
-        if(!list.isEmpty()){
-            throw new BusinessException("知识库名称不能重复");
+        if (knowledgeDTO == null) {
+            throw new BusinessException("参数不能为空");
         }
-
+        Long userId = UserContext.getUserId();
+        if (userId == null) {
+            throw new BusinessException("请先登录");
+        }
         Knowledge knowledge = new Knowledge();
-        BeanUtils.copyProperties(knowledgeDTO, knowledge);
+        BeanUtil.copyProperties(knowledgeDTO, knowledge);
         knowledge.setUserId(userId);
+
+        //存入数据库
+        try {
+            this.save(knowledge);
+        } catch (DuplicateKeyException e) {
+            throw new BusinessException("知识库名称不能重复！");
+        }
 
         //删除知识库数量的缓存
         iKnowledgeCacheService.deleteKnowledgeCountNum();
 
-        //存入数据库
-        this.save(knowledge);
-        LambdaQueryWrapper<Knowledge> lqw = new LambdaQueryWrapper<>();
-        lqw.eq(Knowledge::getUserId, userId)
-                .eq(Knowledge::getName, knowledgeDTO.getName());
-        Knowledge know = getOne(lqw);
-
-        KnowledgeVO knowledgeVO = BeanUtil.copyProperties(know, KnowledgeVO.class);
-        Long id = know.getId();
+        Long id = knowledge.getId();
         //存入本地缓存， 布隆和redis
-        knowledgeVOLocalCache.put(id.toString(), knowledgeVO);
-        knowledgeBloomFilterManager.addKnowledgeToBloom(id);
+        try {
+            knowledgeVOLocalCache.put(id.toString(), BeanUtil.copyProperties(knowledge, KnowledgeVO.class));
+        } catch (Exception e) {
+            log.error("写入本地缓存失败");
+        }
+        try {
+            knowledgeBloomFilterManager.addKnowledgeToBloom(id);
+        } catch (Exception e) {
+            log.error("布隆过滤器新增ID失败");
+        }
 
-        redisCacheUtils.setWithRandomExpire(RedisConstant.KNOWLEDGE_ID + userId + "_" + id, knowledgeVO, RedisConstant.KNOWLEDGE_ID_TTL);
+        redisCacheUtils.setWithRandomExpire(RedisConstant.KNOWLEDGE_ID + userId + "_" + id, BeanUtil.copyProperties(knowledge, KnowledgeVO.class), RedisConstant.KNOWLEDGE_ID_TTL);
     }
 
     /**
@@ -102,10 +110,17 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
      */
     @Override
     public Result<PageResultVO<KnowledgeVO>> pageSelect(PageRequestDTO pageDTO) {
+        if (pageDTO == null) {
+            throw new BusinessException("参数不能为空");
+        }
         Long userId = UserContext.getUserId();
+        if (userId == null) {
+            throw new BusinessException("请先登录");
+        }
         LambdaQueryWrapper<Knowledge> lqw = new LambdaQueryWrapper<>();
         lqw.eq(Knowledge::getUserId, userId)
                 .select(Knowledge::getId);
+        //TODO: 默认mybatis-plus分页查询，后续可以优化
         Page<Knowledge> page = this.page(pageDTO.toMpPage(), lqw);
         List<Long> ids = page.getRecords().stream().map(Knowledge::getId).toList();
         List<KnowledgeVO> knowledgeList = iKnowledgeCacheService.getKnowledgeList(ids);
@@ -114,46 +129,73 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
     }
 
     @Override
-    @Transactional
     public void deleteKnowledge(List<Long> kbId) {
+        if (kbId == null || kbId.isEmpty()) {
+            throw new BusinessException("知识库列表不能为空");
+        }
         LambdaQueryWrapper<Knowledge> knowLqw = new LambdaQueryWrapper<>();
         knowLqw.in(Knowledge::getId, kbId).select(Knowledge::getId).select(Knowledge::getCoverUrl);
         List<Knowledge> list = this.list(knowLqw);
         if(list.isEmpty()){
             throw new BusinessException("知识库不存在！");
         }
+        List<Long> realDeleteIds = list.stream()
+                .map(Knowledge::getId)
+                .filter(Objects::nonNull)
+                .toList();
+        try {
+            knowledgeServiceProxy.deleteKnowledgeAndDoc(realDeleteIds);
+        } catch (Exception e) {
+            log.error("删除知识库失败", e);
+            throw new BusinessException("删除知识库失败");
+        }
+        knowledgeServiceProxy.deleteCacheKnoAndDoc(realDeleteIds, list);
+    }
 
-        //删除知识库集合
-        this.removeBatchByIds(kbId);
-
+    @Async("commonThreadPool")
+    public void deleteCacheKnoAndDoc(List<Long> kbId, List<Knowledge> list){
         //删除知识库redis缓存和本地缓存
         for (Long id : kbId) {
             iKnowledgeCacheService.deleteKnowledge(id);
-            knowledgeVOLocalCache.invalidate(id.toString());
+            try {
+                knowledgeVOLocalCache.invalidate(id.toString());
+            } catch (Exception e) {
+                log.error("删除知识库本地缓存失败", e);
+            }
         }
         //删除知识库数量缓存
         iKnowledgeCacheService.deleteKnowledgeCountNum();
-
+        //删除文档数量相关缓存
+        iDocumentCacheService.deleteCountNum();
         //删除阿里云oss中知识库封面的图片
-        for (Knowledge knowledge : list) {
-            if(knowledge.getCoverUrl() != null){
-                String file = knowledge.getCoverUrl().replaceFirst("^https?://.*?\\.aliyuncs\\.com/", "");
-                aliyunOssUtil.deleteFile(file);
-            }
+        List<String> keys = list.stream()
+                .filter(knowledge -> knowledge.getCoverUrl() != null)
+                .map(knowledge -> knowledge.getCoverUrl().replaceFirst("^https?://.*?\\.aliyuncs\\.com/", ""))
+                .toList();
+        try {
+            aliyunOssUtil.deleteFiles(keys);
+        } catch (Exception e) {
+            log.error("删除知识库封面图片失败", e);
         }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteKnowledgeAndDoc(List<Long> kbId){
 
         //删除与知识库关联的所有文档
         LambdaQueryWrapper<Document> docLqw = new LambdaQueryWrapper<>();
         docLqw.in(Document::getKnowledgeId,kbId);
         mindDocumentService.remove(docLqw);
 
-        //删除文档数量相关缓存
-        iDocumentCacheService.deleteCountNum();
+        //删除知识库集合
+        this.removeBatchByIds(kbId);
     }
 
     @Override
-    @Transactional
     public void updateKnowledge(KnowledgeDTO knowledgeDTO) {
+        if(knowledgeDTO == null){
+            throw new BusinessException("参数不能为空");
+        }
         Knowledge knowledge = BeanUtil.copyProperties(knowledgeDTO, Knowledge.class);
         boolean success = updateById(knowledge);
         if(success){

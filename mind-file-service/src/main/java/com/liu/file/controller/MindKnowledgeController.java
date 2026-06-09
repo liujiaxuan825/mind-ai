@@ -1,7 +1,9 @@
 package com.liu.file.controller;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.liu.common.common.domain.ComKnowledgeVO;
 import com.liu.file.Service.IKnowledgeCacheService;
 import com.liu.file.Service.IMindKnowledgeService;
 import com.liu.file.domain.DTO.KnowledgeDTO;
@@ -11,9 +13,11 @@ import com.liu.common.common.Result;
 import com.liu.common.common.page.PageRequestDTO;
 import com.liu.common.common.page.PageResultVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -26,6 +30,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/knowledge")
 @RequiredArgsConstructor
+@RefreshScope
 public class MindKnowledgeController {
     
     private final IMindKnowledgeService mindKnowledgeService;
@@ -64,8 +69,10 @@ public class MindKnowledgeController {
      * 微服务暴露接口
      */
     @PostMapping("/list")
-    public List<KnowledgeVO> list(@RequestBody List<Long> kbId){
-        return knowledgeCacheService.getKnowledgeList(kbId);
+    public List<ComKnowledgeVO> list(@RequestBody List<Long> kbId){
+        List<KnowledgeVO> knowledgeList = knowledgeCacheService.getKnowledgeList(kbId);
+        return knowledgeList.stream()
+                .map(knowledgeVO -> BeanUtil.copyProperties(knowledgeVO, ComKnowledgeVO.class)).collect(Collectors.toList());
     }
 
 }
