@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.liu.common.exception.BusinessException;
 import com.liu.common.untils.UserContext;
+import com.liu.file.Bloom.DocumentBloomFilterManager;
 import com.liu.file.Service.IDocumentCacheService;
 import com.liu.file.domain.Entity.Document;
 import com.liu.file.domain.VO.DocumentVO;
@@ -32,6 +33,8 @@ public class DocumentCacheServiceImpl extends ServiceImpl<MindDocumentMapper, Do
 
     private final RedissonClient redissonClient;
 
+    private final DocumentBloomFilterManager documentBloomFilterManager;
+
 
 
     @Override
@@ -41,12 +44,13 @@ public class DocumentCacheServiceImpl extends ServiceImpl<MindDocumentMapper, Do
         String key = RedisConstant.DOCUMENT_COUNT_NUM + userId;
         Long num = redisCacheUtils.get(key, Long.class);
 
-        if(num!=null){
+        if(num != null){
             return num;
         }
 
         LambdaQueryWrapper<Document> lqw = new LambdaQueryWrapper<>();
         lqw.eq(Document::getCreatedByUserId,userId);
+        lqw.eq(Document::getIsDeleted,0);
         long count = count(lqw);
         redisCacheUtils.setWithKeep(key,count);
         return count;
@@ -56,10 +60,15 @@ public class DocumentCacheServiceImpl extends ServiceImpl<MindDocumentMapper, Do
     public void deleteCountNum() {
         Long userId = UserContext.getUserId();
         String key = RedisConstant.DOCUMENT_COUNT_NUM + userId;
-        redisCacheUtils.delete(key);
+        try {
+            redisCacheUtils.delete(key);
+        } catch (Exception e) {
+            log.error("redis缓存删除数量失败,{}",e);
+        }
     }
 
     @Override
+    @CacheMonitor(cacheName = "document")
     public DocumentVO getDocument(Long docId) {
         Long userId = UserContext.getUserId();
         String cacheKey = RedisConstant.DOCUMENT_CACHE_DISABLE + userId + "_" + docId;
@@ -67,8 +76,9 @@ public class DocumentCacheServiceImpl extends ServiceImpl<MindDocumentMapper, Do
         if (exists) {
             return getDocumentFromDb(docId);
         }
-        //TODO: 1. 先判断布隆过滤器判断是否存在
-
+        if(!documentBloomFilterManager.isDocumentContain(docId)){
+            return null;
+        }
         // 2. 再判断本地缓存是否存在
         DocumentVO localVO = documentCache.getIfPresent(docId.toString());
         if (localVO != null) {

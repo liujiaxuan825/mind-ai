@@ -1,11 +1,14 @@
 package com.liu.file.Service.Impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.liu.common.common.constant.RedisConstant;
+import com.liu.common.common.domain.DocumentMqMsgDTO;
 import com.liu.common.config.redisConfig.StringRedisTemplateConfig;
 import com.liu.common.untils.UserContext;
 import com.liu.file.Service.IDocumentCacheService;
@@ -24,19 +27,19 @@ import com.liu.common.common.constant.MqConstant;
 import com.liu.common.common.page.PageRequestDTO;
 import com.liu.common.common.page.PageResultVO;
 import com.liu.common.exception.BusinessException;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -75,25 +78,50 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
     @Lazy
     private final DocumentBloomFilterManager documentBloomFilterManager;
 
-    private final MindDocumentMapper mindDocumentMapper;
-
     private final StringRedisTemplateConfig.RedisCacheUtils redisCacheUtils;
 
     private final Cache<String, DocumentVO> documentCache;
 
+    private final MindDocumentServiceImpl selfService;
+
 
     @Override
+    @SentinelResource(value = "file:addDocument", blockHandler = "addDocumentBlock")
     public Result<String> addDocument(Long klId, MultipartFile file) {
+        if(klId == null){
+            throw new BusinessException("知识库ID不能为空");
+        }
 
         //直接调用统一上传文件服务
-        String fileKey = uploadFeignClient.uploadFile(file).getData();
+        Result<String> stringResult;
+        try {
+            stringResult = uploadFeignClient.uploadFile(file);
+        } catch (FeignException e) {
+            // Feign客户端异常
+            log.error("调用上传服务失败, status:{}, message:{}", e.status(), e.getMessage(), e);
+            throw new BusinessException("文件上传服务暂时不可用，请稍后重试");
+        }
 
-        // 创建文档记录,保存到数据库
-        Document documentRecord = createDocumentRecord(klId, file, fileKey);
+        if(stringResult == null || stringResult.getData() == null){
+            throw new BusinessException("文档添加失败，文件上传失败");
+        }
+        String fileKey = stringResult.getData();
 
-        //保存到布隆过滤器
-        documentBloomFilterManager.isDocumentContain(documentRecord.getId());
-
+        Document documentRecord = null;
+        try {
+            //创建文档记录,保存到数据库
+            documentRecord = createDocumentRecord(klId, file, fileKey);
+        }catch (Exception e){
+            //立即清除oss中的文件
+            deleteDocInOss(fileKey);
+            throw new BusinessException("数据库文档添加失败");
+        }
+        try {
+            //保存到布隆过滤器
+            documentBloomFilterManager.addDocumentToBloom(documentRecord.getId());
+        }catch (Exception e){
+            log.error("添加文档到布隆过滤器失败", e);
+        }
         // 触发异步解析
         triggerDocumentParse(documentRecord);
 
@@ -101,9 +129,27 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
         return Result.success(fileKey);
     }
 
+    private void deleteDocInOss(String fileKey) {
+        if(fileKey == null){
+            return;
+        }
+        aliyunOssUtil.deleteFile(fileKey);
+    }
+
+    public Result<String> addDocumentBlock(Long klId, MultipartFile file, BlockException e) {
+        log.error("文档添加失败，请求频率过高，请稍后重试", e);
+        return Result.error("文档添加失败，请求频率过高，请稍后重试");
+    }
+
 
     @Override
     public Result<PageResultVO<DocumentVO>> pageSelect(PageRequestDTO page, Long kbId) {
+        if(page == null){
+            throw new BusinessException("分页参数不能为空");
+        }
+        if(kbId == null){
+            throw new BusinessException("知识库ID不能为空");
+        }
         LambdaQueryWrapper<Document> lqw = new LambdaQueryWrapper<>();
         lqw.eq(Document::getKnowledgeId, kbId)
                 .eq(Document::getCreatedByUserId, UserContext.getUserId())
@@ -117,58 +163,80 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
 
     @Override
     public Result<DocumentVO> getDocument(Long docId) {
+        if(docId == null){
+            throw new BusinessException("文档ID不能为空");
+        }
         return Result.success(documentCacheService.getDocument(docId));
     }
 
 
     @Override
     public void deleteDocument(Long docId) {
+        if(docId == null){
+            throw new BusinessException("文档ID不能为空");
+        }
         Long userId = UserContext.getUserId();
+        if(userId == null){
+            throw new BusinessException("登陆过期");
+        }
         //1.删除前校验
         Document document = getById(docId);
         if (document == null || document.getIsDeleted() == 1) {
             throw new BusinessException("文档不存在或已被删除");
         }
 
-        //2.添加禁用缓存标记
+        //2.软删除DB中文档记录
+        boolean deleteSuccess = selfService.doDeleteTransaction(docId);
+        if (!deleteSuccess) {
+            throw new BusinessException("文档删除失败");
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                processAfterDeleteSuccess(document, userId);
+            }
+        });
+    }
+
+    private void processAfterDeleteSuccess(Document document, Long userId) {
+        Long docId = document.getId();
+        //添加禁用缓存标记
         String cacheKey = RedisConstant.DOCUMENT_CACHE_DISABLE + userId + "_" + docId;
         redisCacheUtils.setWithRandomExpire(cacheKey, "1", RedisConstant.DOCUMENT_CACHE_DISABLE_TTL);
         log.info("缓存禁用标记设置成功，docId: {}", docId);
 
-        //3.删除文档redis缓存
+        //删除文档redis缓存
         String key = RedisConstant.DOCUMENT_ID + userId + "_" + docId;
         documentCacheService.deleteCountNum();
         redisCacheUtils.delete(key);
         log.info("文档redis缓存第一次删除成功，docId: {}", docId);
 
-        //4.删除本地缓存
+        //删除本地缓存
         documentCache.invalidate(docId.toString());
 
-        //5.软删除DB中文档记录
-        doDeleteTransaction(docId);
-
-        //6.延迟双删redis中的缓存
-        redisCacheUtils.delete(key);
-
-        //7.延迟双删本地缓存
-        documentCache.invalidate(docId.toString());
-
-        //8.发送延迟删除消息（终极兜底方案）
+        //8.发送延迟删除消息（终极兜底方案）TODO: 目前没有延迟
         rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_REDIS_CACHE_DELETE,
                 MqConstant.ROUT_KEY_DOCUMENT_REDIS_CACHE_DELETE, document, new CorrelationData(docId.toString()));
 
-        //9.发送删除消息至es，向量数据库，oss存储
-        rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_ES_MILVUS_OSS_DELETE,
-                MqConstant.ROUT_KEY_DOCUMENT_ES_DELETE, document , new CorrelationData(docId.toString()));
-
-        rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_ES_MILVUS_OSS_DELETE,
-                MqConstant.ROUT_KEY_DOCUMENT_MILVUS_DELETE, document , new CorrelationData(docId.toString()));
-
-        rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_ES_MILVUS_OSS_DELETE,
-                MqConstant.ROUT_KEY_DOCUMENT_OSS_DELETE, document , new CorrelationData(docId.toString()));
+        sendDeleteIndexAndFileMsg(document);
     }
 
-    private void doDeleteTransaction(Long docId) {
+    private void sendDeleteIndexAndFileMsg(Document document) {
+        //发送删除消息至es，向量数据库，oss存储
+        DocumentMqMsgDTO documentMqMsgDTO = BeanUtil.copyProperties(document, DocumentMqMsgDTO.class);
+        rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_ES_MILVUS_OSS_DELETE,
+                MqConstant.ROUT_KEY_DOCUMENT_ES_DELETE, documentMqMsgDTO , new CorrelationData(document.getId().toString()));
+
+        rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_ES_MILVUS_OSS_DELETE,
+                MqConstant.ROUT_KEY_DOCUMENT_MILVUS_DELETE, documentMqMsgDTO , new CorrelationData(document.getId().toString()));
+
+        rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_ES_MILVUS_OSS_DELETE,
+                MqConstant.ROUT_KEY_DOCUMENT_OSS_DELETE, document.getFileKey() , new CorrelationData(document.getId().toString()));
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public boolean doDeleteTransaction(Long docId) {
         //1.软删除DB中文档记录
         LambdaUpdateWrapper<Document> lqw = new LambdaUpdateWrapper<>();
         lqw.eq(Document::getId, docId)
@@ -176,8 +244,9 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
                 .eq(Document::getCreatedByUserId, UserContext.getUserId())
                 .set(Document::getUpdatedTime, LocalDateTime.now())
                 .set(Document::getIsDeleted, 1);
-        this.update(lqw);
-        //2.
+        boolean result = this.update(lqw);
+        log.info("文档软删除结果: {}, docId: {}", result, docId);
+        return result;
     }
 
 
@@ -207,6 +276,9 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
         document.setFileExtension(extractFileExtension(Objects.requireNonNull(file.getOriginalFilename())));
         document.setStatus(DocumentStatus.UPLOADED);
         document.setCreatedByUserId(UserContext.getUserId());
+        document.setCreatedTime(LocalDateTime.now());
+        document.setUpdatedTime(LocalDateTime.now());
+        document.setIsDeleted(0);
         this.save(document);
         return document;
     }
@@ -218,20 +290,9 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void DocParse(Document documentRecord) {
-        Document nowDocument = this.getById(documentRecord.getId());
-        //幂等性检查,mq消息重复消费时，避免重复解析文档
-        if (nowDocument.getStatus() == DocumentStatus.PARSING ||
-                nowDocument.getStatus() == DocumentStatus.COMPLETED ||
-                nowDocument.getStatus() == DocumentStatus.FAILED) {
-            log.warn("文档状态为解析完成或解析失败，无需解析，文档ID: {}", nowDocument.getId());
-            return;
-        }
-
         //更新文档状态为解析中
         log.info("开始解析文档，文档ID: {}", documentRecord.getId());
-        updateDocumentStatus(documentRecord, DocumentStatus.PARSING, "");
         String fileKey = documentRecord.getFileKey();
         fileKey = fileKey.replaceFirst("^https?://.*?\\.aliyuncs\\.com/", "");
         Path tempFile = null;
@@ -251,16 +312,22 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
             // 4. 更新数据库
             updateDocumentContent(documentRecord, content, pageCount);
 
-            // 5. 把数据一同存入es当中,为全文检索做准备
+            // 5.1 把数据一同存入es当中,为全文检索做准备
             documentRecord.setContentText(content);
             documentRecord.setPageCount(pageCount);
-            rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_PARSE_ES_MILVUS, MqConstant.ROUT_KEY_DOCUMENT_SAVE,
-                    documentRecord, new CorrelationData(documentRecord.getId().toString()));
 
+            // 5.2 转化为common中的DocumentMqMsgDTO
+            DocumentMqMsgDTO documentMqMsgDTO = BeanUtil.copyProperties(documentRecord, DocumentMqMsgDTO.class);
+
+
+            rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_PARSE_ES_MILVUS, MqConstant.ROUT_KEY_DOCUMENT_SAVE,
+                                documentMqMsgDTO, new CorrelationData(documentMqMsgDTO.getId().toString()));
             rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_PARSE_ES_MILVUS, MqConstant.ROUT_KEY_DOCUMENT_MILVUS,
-                    documentRecord, new CorrelationData(documentRecord.getId().toString()));
+                                documentMqMsgDTO, new CorrelationData(documentMqMsgDTO.getId().toString()));
+
         } catch (Exception e) {
             log.error("文档解析/es写入失败，文档ID: {}", documentRecord.getId(), e);
+            updateDocumentStatus(documentRecord, DocumentStatus.FAILED, "文档解析/es写入失败!");
             throw new BusinessException("文档解析/es写入失败!");
         } finally {
             // 5. 简化的临时文件清理（单次重试，砍掉锁定检查）
@@ -398,4 +465,4 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
             log.error("批量清理临时文件失败", e);
         }
     }
-}
+    }

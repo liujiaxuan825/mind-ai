@@ -1,15 +1,12 @@
 package com.liu.file.controller;
 
-
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.liu.common.untils.UserContext;
 import com.liu.file.Service.IMindDocumentService;
-import com.liu.file.domain.Entity.Document;
 import com.liu.file.domain.VO.DocumentVO;
 import com.liu.common.common.Result;
 import com.liu.common.common.page.PageRequestDTO;
 import com.liu.common.common.page.PageResultVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/document")
+@RefreshScope
 public class MindDocumentController {
 
     private final IMindDocumentService mindDocumentService;
