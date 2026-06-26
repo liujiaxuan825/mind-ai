@@ -3,7 +3,6 @@ package com.liu.file;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration;
 import org.springframework.cloud.openfeign.EnableFeignClients;
@@ -12,7 +11,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
  *
  *
  */
-@SpringBootApplication(scanBasePackages = {"com.liu.file", "com.liu.common", "com.liu.upload"},
+@SpringBootApplication(scanBasePackages = {"com.liu.file", "com.liu.common"},
     exclude = {MybatisPlusAutoConfiguration.class})
 @MapperScan("com.liu.file.mapper")
 @EnableDiscoveryClient

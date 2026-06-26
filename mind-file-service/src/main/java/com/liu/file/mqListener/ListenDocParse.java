@@ -24,6 +24,7 @@ import java.io.IOException;
 public class ListenDocParse {
 
     private final IMindDocumentService iDocumentService;
+
     private final MindDocumentServiceImpl mindDocumentServiceImpl;
 
     @RabbitListener(queues = MqConstant.QUEUE_DOCUMENT_PARSE)

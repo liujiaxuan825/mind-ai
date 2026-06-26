@@ -137,11 +137,10 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
         Long userId = UserContext.getUserId();
         String key = RedisConstant.KNOWLEDGE_ID + userId + "_" + knowledge.getId();
         try {
-            KnowledgeVO knowledgeVO = BeanUtil.copyProperties(knowledge, KnowledgeVO.class);
             redisCacheUtils.delete(key);
             knowledgeVOLocalCache.invalidate(knowledge.getId().toString());
         } catch (Exception e) {
-            log.error("redis更新缓存失败,{}",e);
+            log.error("缓存失败,{}",e);
         }
     }
 
@@ -206,7 +205,11 @@ public class KnowledgeCacheServiceImpl extends ServiceImpl<MindKnowledgeMapper, 
     public void deleteKnowledgeCountNum() {
         Long userId = UserContext.getUserId();
         String key = RedisConstant.KNOWLEDGE_COUNT_NUM + userId;
-        redisCacheUtils.delete(key);
+        try {
+            redisCacheUtils.delete(key);
+        } catch (Exception e) {
+            log.error("redis缓存删除数量失败,{}",e);
+        }
     }
 
 

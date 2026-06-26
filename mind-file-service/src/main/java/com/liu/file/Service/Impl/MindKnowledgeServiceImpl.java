@@ -24,6 +24,7 @@ import com.liu.common.common.page.PageResultVO;
 import com.liu.common.config.redisConfig.StringRedisTemplateConfig;
 import com.liu.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DuplicateKeyException;
@@ -32,7 +33,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 
 /**
@@ -45,13 +45,12 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, Knowledge> implements IMindKnowledgeService {
 
     private final IMindDocumentService  mindDocumentService;
 
     private final IKnowledgeCacheService iKnowledgeCacheService;
-
-    private final IDocumentCacheService iDocumentCacheService;
 
     private final StringRedisTemplateConfig.RedisCacheUtils redisCacheUtils;
 
@@ -143,12 +142,7 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
                 .map(Knowledge::getId)
                 .filter(Objects::nonNull)
                 .toList();
-        try {
-            knowledgeServiceProxy.deleteKnowledgeAndDoc(realDeleteIds);
-        } catch (Exception e) {
-            log.error("删除知识库失败", e);
-            throw new BusinessException("删除知识库失败");
-        }
+        knowledgeServiceProxy.isContainsDocumentAndDelete(realDeleteIds);
         knowledgeServiceProxy.deleteCacheKnoAndDoc(realDeleteIds, list);
     }
 
@@ -165,13 +159,14 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
         }
         //删除知识库数量缓存
         iKnowledgeCacheService.deleteKnowledgeCountNum();
-        //删除文档数量相关缓存
-        iDocumentCacheService.deleteCountNum();
         //删除阿里云oss中知识库封面的图片
         List<String> keys = list.stream()
                 .filter(knowledge -> knowledge.getCoverUrl() != null)
                 .map(knowledge -> knowledge.getCoverUrl().replaceFirst("^https?://.*?\\.aliyuncs\\.com/", ""))
                 .toList();
+        if(keys.isEmpty()){
+            return;
+        }
         try {
             aliyunOssUtil.deleteFiles(keys);
         } catch (Exception e) {
@@ -179,22 +174,28 @@ public class MindKnowledgeServiceImpl extends ServiceImpl<MindKnowledgeMapper, K
         }
     }
 
-    @Transactional(rollbackFor = Exception.class)
-    public void deleteKnowledgeAndDoc(List<Long> kbId){
-
-        //删除与知识库关联的所有文档
-        LambdaQueryWrapper<Document> docLqw = new LambdaQueryWrapper<>();
-        docLqw.in(Document::getKnowledgeId,kbId);
-        mindDocumentService.remove(docLqw);
-
-        //删除知识库集合
-        this.removeBatchByIds(kbId);
+    public void isContainsDocumentAndDelete(List<Long> kbId){
+        if(kbId == null || kbId.isEmpty()){
+            throw new BusinessException("知识库列表不能为空");
+        }
+        LambdaQueryWrapper<Document>  lqw = new LambdaQueryWrapper<>();
+        lqw.in(Document::getKnowledgeId, kbId);
+        long count = mindDocumentService.count(lqw);
+        if(count > 0){
+            throw new BusinessException("知识库下有文档，不能删除！");
+        }
+        //删除知识库
+        removeByIds(kbId);
     }
 
     @Override
     public void updateKnowledge(KnowledgeDTO knowledgeDTO) {
         if(knowledgeDTO == null){
             throw new BusinessException("参数不能为空");
+        }
+        Long userId = UserContext.getUserId();
+        if (userId == null) {
+            throw new BusinessException("请先登录");
         }
         Knowledge knowledge = BeanUtil.copyProperties(knowledgeDTO, Knowledge.class);
         boolean success = updateById(knowledge);

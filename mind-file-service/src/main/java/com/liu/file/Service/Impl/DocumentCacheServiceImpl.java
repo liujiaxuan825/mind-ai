@@ -144,7 +144,7 @@ public class DocumentCacheServiceImpl extends ServiceImpl<MindDocumentMapper, Do
 
     public DocumentVO getDocumentFromDb(Long docId) {
         Long userId = UserContext.getUserId();
-        Document document = getOne(new  LambdaQueryWrapper<Document>().eq(Document::getId, docId)
+        Document document = getOne(new LambdaQueryWrapper<Document>().eq(Document::getId, docId)
         .eq(Document::getCreatedByUserId,userId).eq(Document::getIsDeleted,0));
         if(document==null){
             return null;

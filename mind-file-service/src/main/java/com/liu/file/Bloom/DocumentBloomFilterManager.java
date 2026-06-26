@@ -45,7 +45,7 @@ public class DocumentBloomFilterManager {
     }
 
     //添加逻辑
-    public void addKnowledgeToBloom(Long id){
+    public void addDocumentToBloom(Long id){
         DocumentBloomFilter.add(id);
     }
 

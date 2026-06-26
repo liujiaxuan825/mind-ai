@@ -51,7 +51,7 @@ public class KnowledgeBloomFilterManager {
         KnowledgeBloomFilter.add(id);
     }
 
-    @Async("bloom")
+    @Async("bloomWarmupThreadPool")
     public void addAllKnowledgeToBloom() {
         if(bloomDataProvider == null || KnoWarmUpCompleted){
             log.info("数据已存入或bean为空，无需执行");

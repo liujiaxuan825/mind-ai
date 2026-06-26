@@ -64,7 +64,6 @@ import java.util.Objects;
 @Slf4j
 public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Document> implements IMindDocumentService {
 
-
     private final RabbitMqSendUtil rabbitMqSendUtil;
 
     private final IDocumentCacheService  documentCacheService;
@@ -81,8 +80,6 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
     private final StringRedisTemplateConfig.RedisCacheUtils redisCacheUtils;
 
     private final Cache<String, DocumentVO> documentCache;
-
-    private final MindDocumentServiceImpl selfService;
 
 
     @Override
@@ -186,17 +183,13 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
         }
 
         //2.软删除DB中文档记录
-        boolean deleteSuccess = selfService.doDeleteTransaction(docId);
+        boolean deleteSuccess = doDeleteTransaction(docId);
         if (!deleteSuccess) {
             throw new BusinessException("文档删除失败");
         }
 
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                processAfterDeleteSuccess(document, userId);
-            }
-        });
+        processAfterDeleteSuccess(document, userId);
+
     }
 
     private void processAfterDeleteSuccess(Document document, Long userId) {
@@ -235,7 +228,7 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
                 MqConstant.ROUT_KEY_DOCUMENT_OSS_DELETE, document.getFileKey() , new CorrelationData(document.getId().toString()));
     }
 
-    @Transactional(rollbackFor = Exception.class)
+
     public boolean doDeleteTransaction(Long docId) {
         //1.软删除DB中文档记录
         LambdaUpdateWrapper<Document> lqw = new LambdaUpdateWrapper<>();
@@ -318,7 +311,6 @@ public class MindDocumentServiceImpl extends ServiceImpl<MindDocumentMapper, Doc
 
             // 5.2 转化为common中的DocumentMqMsgDTO
             DocumentMqMsgDTO documentMqMsgDTO = BeanUtil.copyProperties(documentRecord, DocumentMqMsgDTO.class);
-
 
             rabbitMqSendUtil.sendMsg(MqConstant.EXCHANGE_DOCUMENT_PARSE_ES_MILVUS, MqConstant.ROUT_KEY_DOCUMENT_SAVE,
                                 documentMqMsgDTO, new CorrelationData(documentMqMsgDTO.getId().toString()));
