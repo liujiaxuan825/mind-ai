@@ -140,7 +140,7 @@ public class StringRedisTemplateConfig {
                     CacheContextHolder.setCacheNull(false);
                     return JSONUtil.toBean(json, type, false);
                 }
-                if (RedisConstant.CACHE_NULL_OBJECT.equals(key)) {
+                if (RedisConstant.CACHE_NULL_OBJECT.equals(json)) {
                     CacheContextHolder.setCacheHit(true);
                     CacheContextHolder.setCacheNull(true);
                 }else {

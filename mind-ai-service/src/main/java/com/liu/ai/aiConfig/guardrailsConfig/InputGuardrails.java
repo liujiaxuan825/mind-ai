@@ -6,7 +6,6 @@ import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.guardrail.*;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
-import dev.langchain4j.rag.AugmentationResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -49,7 +48,7 @@ public class InputGuardrails implements InputGuardrail {
         boolean isSuccess = Boolean.parseBoolean(isPass);
         if(isSuccess){
             log.error("检测到用户存在不正当发言，内容为：{}", question);
-            return failure("检测到您有恶意输入，请求已经被拒绝");
+            return successWith("检测到您有恶意输入，请求已经被拒绝");
         }
 
         GuardrailRequestParams param = params.requestParams();
@@ -62,10 +61,6 @@ public class InputGuardrails implements InputGuardrail {
             }
         }
 
-        AugmentationResult augmentationResult = param.augmentationResult();
-//        if(augmentationResult.contents().isEmpty()){
-//            return this.failure("抱歉，在知识库中未找到相关内容，请尝试更换关键词。");
-//        }
         return this.success();
     }
 }

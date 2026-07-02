@@ -2,8 +2,8 @@ package com.liu.gateway;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.liu.common.untils.JwtUtils;
-import com.liu.common.service.TokenBlacklistService;
+import com.liu.gateway.config.JwtUtils;
+import com.liu.gateway.config.TokenBlacklistService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;

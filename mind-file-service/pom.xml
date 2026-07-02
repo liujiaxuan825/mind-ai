@@ -22,13 +22,6 @@
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.yourname</groupId>
-            <artifactId>mind-upload-service</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
-
-
         <!-- Spring Boot Starter Web (包含Spring Boot自动配置) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -64,12 +57,7 @@
             <artifactId>postgresql</artifactId>
         </dependency>
 
-        <!-- Spring Boot 测试依赖 -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -94,8 +82,29 @@
         </dependency>
 
         <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-bootstrap</artifactId>
+            <version>4.0.3</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.openfeign</groupId>
+            <artifactId>feign-hc5</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
         </dependency>
 
         <dependency>

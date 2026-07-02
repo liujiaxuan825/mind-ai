@@ -25,13 +25,11 @@ public class OssConfig {
 
     @PostConstruct
     public void init() {
-        log.info("=== OSS配置调试信息 ===");
+        log.info("=== OSS配置初始化 ===");
         log.info("endpoint: {}", endpoint);
-        log.info("accessKeyId: {}", accessKeyId != null && !accessKeyId.isEmpty() ? "***已配置***" : "NULL");
-        log.info("accessKeySecret: {}", accessKeySecret != null && !accessKeySecret.isEmpty() ? "***已配置***" : "NULL");
-        log.info("环境变量OSS_ACCESS_KEY_ID: {}", System.getenv("OSS_ACCESS_KEY_ID") != null ? "已设置" : "未设置");
-        log.info("环境变量OSS_ACCESS_KEY_SECRET: {}", System.getenv("OSS_ACCESS_KEY_SECRET") != null ? "已设置" : "未设置");
-        log.info("=== OSS配置调试结束 ===");
+        log.info("accessKeyId: {}", accessKeyId != null && !accessKeyId.isEmpty() ? "已配置" : "未配置");
+        log.info("accessKeySecret: {}", accessKeySecret != null && !accessKeySecret.isEmpty() ? "已配置" : "未配置");
+        log.info("=== OSS配置初始化完成 ===");
     }
 
     @Bean(destroyMethod = "shutdown")

@@ -29,6 +29,9 @@ public class ChatHistory implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
+    @TableField("windows_id")
+    private String windowsId;
+
     /**
      * 用户id+对话id
      */
@@ -48,16 +51,16 @@ public class ChatHistory implements Serializable {
     private String content;
 
     /**
-     * 时间戳
+     * 创建时间
      */
     @TableField("create_time")
-    private Long createTime;
+    private LocalDateTime createTime;
 
     /**
-     * 可读的时间戳格式
+     * 创建时间戳
      */
     @TableField("create_time_timestamp")
-    private LocalDateTime createTimeTimestamp;
+    private Long createTimeTimestamp;
 
 
 }

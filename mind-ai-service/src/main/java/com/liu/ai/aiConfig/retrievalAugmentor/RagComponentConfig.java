@@ -1,6 +1,6 @@
 package com.liu.ai.aiConfig.retrievalAugmentor;
 
-import com.liu.common.untils.UserContext;
+import com.liu.ai.common.UserContext;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -15,17 +15,17 @@ import dev.langchain4j.rag.query.transformer.CompressingQueryTransformer;
 import dev.langchain4j.rag.query.transformer.QueryTransformer;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.filter.Filter;
+import dev.langchain4j.store.embedding.filter.comparison.IsEqualTo;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import java.util.List;
 import java.util.function.Function;
 
-import static dev.langchain4j.store.embedding.filter.MetadataFilterBuilder.metadataKey;
-
 @Configuration
 @RequiredArgsConstructor
+@Slf4j
 public class RagComponentConfig {
 
     private final EmbeddingModel embeddingModel;
@@ -45,18 +45,22 @@ public class RagComponentConfig {
     public ContentRetriever createContentRetriever() {
         Function<Query, Filter> userIdFilter = (query)->{
             Long userId = UserContext.getUserId();
+            log.info("====================> 当前检索器获取到的 userId：{}", userId);
             if(userId == null){
-                return null;
+                log.warn("⚠️ userId为空，返回null过滤器");
+                return new IsEqualTo("userId", "");
             }
             String id = userId.toString();
-            return metadataKey("userId").isEqualTo(id);
+            Filter filter = new IsEqualTo("userId", id);
+            log.info("====================> 过滤器条件：userId = {}", id);
+            return filter;
         };
 
         return EmbeddingStoreContentRetriever.builder()
                 .embeddingModel(embeddingModel)
                 .embeddingStore(embeddingStore)
                 .dynamicFilter(userIdFilter)
-                .maxResults(5)
+                .maxResults(3)
                 .build();
     }
 

@@ -107,9 +107,10 @@ public class CustomThreadPoolConfig {
         );
     }
 
-    // 可扩展：注册MQ消费专用线程池（同理，按你的yml参数传入即可）
-    // @Bean(name = "mqConsumeThreadPool")
-    // public ThreadPoolExecutor mqConsumeThreadPool() {
-    //     return buildThreadPool(mqCoreSize, mqMaxSize, mqKeepAlive, mqQueueSize, mqThreadPrefix);
-    // }
+    @Bean(name = "commonThreadPool")
+    public ThreadPoolExecutor commonThreadPool() {
+        return buildThreadPool(
+                bloomCoreSize, bloomMaxSize, bloomKeepAlive, bloomQueueSize, bloomThreadPrefix
+        );
+    }
 }

@@ -26,7 +26,7 @@ public class ListenDocDelete {
     private final Cache<String, DocumentVO> documentCache;
 
     @RabbitListener(queues = MqConstant.QUEUE_DOCUMENT_REDIS_CACHE_DELETE)
-    public void documentRedisCacheDelete(@Payload Document document, Channel channel, Message message) throws IOException {
+    public void documentRedisCacheDelete(Document document, Channel channel, Message message) throws IOException {
         long tag = message.getMessageProperties().getDeliveryTag();
         log.info("最终兜底删除redis和本地缓存，文档id：{}", document.getId());
         try {

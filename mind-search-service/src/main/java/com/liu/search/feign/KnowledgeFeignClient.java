@@ -1,8 +1,7 @@
 package com.liu.search.feign;
 
-import com.liu.file.domain.VO.KnowledgeVO;
+import com.liu.common.common.domain.ComKnowledgeVO;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -12,5 +11,5 @@ import java.util.List;
 public interface KnowledgeFeignClient {
 
     @PostMapping("api/knowledge/list")
-    List<KnowledgeVO> list(@RequestBody List<Long> kbId);
+    List<ComKnowledgeVO> list(@RequestBody List<Long> kbId);
 }

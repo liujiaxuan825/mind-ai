@@ -1,5 +1,7 @@
 package com.liu.common.config.globalexceptionConfig;
 
+import com.alibaba.csp.sentinel.slots.block.degrade.DegradeException;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowException;
 import com.liu.common.common.Result;
 import com.liu.common.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
@@ -32,6 +35,20 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public Result<Void> handleException(Exception e) {
         log.error("系统异常: ", e);
-        return Result.error("系统繁忙，请稍后重试");
+        return Result.error("内部出错了，请联系官人哨子~");
+    }
+
+    @ExceptionHandler(FlowException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public Result<Void> handleFlowException(FlowException e) {
+        log.warn("限流异常: {}", e.getMessage());
+        return Result.flowLimitError();
+    }
+
+    @ExceptionHandler(DegradeException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public Result<Void> handleDegradeException(DegradeException e) {
+        log.warn("[Sentinel 熔断] 触发熔断规则，规则详情：{}", e.getRule());
+        return Result.degradeError();
     }
 }

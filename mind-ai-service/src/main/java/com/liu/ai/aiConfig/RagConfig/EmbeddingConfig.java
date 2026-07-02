@@ -1,6 +1,5 @@
 package com.liu.ai.aiConfig.RagConfig;
 
-import com.liu.common.untils.UserContext;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.document.splitter.DocumentSplitters;

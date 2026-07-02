@@ -1,0 +1,11 @@
+com\liu\user\domain\dto\UserRegisterDTO.class
+com\liu\user\service\impl\MindUserServiceImpl.class
+com\liu\user\enumsPack\UserStatus.class
+com\liu\user\domain\dto\UserLoginDTO.class
+com\liu\user\controller\UserController.class
+com\liu\user\domain\vo\UserLoginVO.class
+com\liu\user\UserApplication.class
+com\liu\user\service\MindUserService.class
+com\liu\user\domain\vo\UserVO.class
+com\liu\user\domain\entity\User.class
+com\liu\user\mapper\MindUserMapper.class

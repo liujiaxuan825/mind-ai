@@ -7,11 +7,13 @@ import com.liu.user.domain.vo.UserVO;
 import com.liu.common.common.Result;
 import com.liu.user.service.MindUserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/user")
 @RequiredArgsConstructor
+@RefreshScope
 public class UserController {
     private final MindUserService mindUserService;
 

@@ -2,7 +2,7 @@ package com.liu.ai.aiConfig;
 
 import com.liu.ai.aiConfig.AiServiceConfig.ChatAssistant;
 import com.liu.ai.aiConfig.ChatMemoryConfig.PostgresChatMemory;
-import com.liu.ai.aiConfig.ToolConfig.CountTools;
+import com.liu.ai.aiConfig.ToolConfig.InternalDocsTools;
 import com.liu.ai.aiConfig.guardrailsConfig.InputGuardrails;
 import com.liu.ai.aiConfig.guardrailsConfig.OutputGuardrails;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Configuration;
 @RequiredArgsConstructor
 public class CommentConfig {
 
-    private final StreamingChatModel  streamingChatModel;
+    private final StreamingChatModel chatModel;
 
     private final PostgresChatMemory postgresChatMemory;
 
@@ -30,11 +30,11 @@ public class CommentConfig {
     @Bean
     public ChatAssistant creatAiService(){
         return AiServices.builder(ChatAssistant.class)
-                .streamingChatModel(streamingChatModel)
-                .tools(new CountTools())
+                .streamingChatModel(chatModel)
+                .tools(new InternalDocsTools())
                 .chatMemoryProvider(memoryId -> MessageWindowChatMemory.builder()
                         .id(memoryId)
-                        .maxMessages(10)
+                        .maxMessages(5)
                         .chatMemoryStore(postgresChatMemory)
                         .build())
                 .retrievalAugmentor(retrievalAugmentor)

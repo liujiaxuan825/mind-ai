@@ -1,0 +1,15 @@
+D:\mind-ai\mind-search-service\src\main\java\com\liu\search\controller\DocumentSearchController.java
+D:\mind-ai\mind-search-service\src\main\java\com\liu\search\domain\VO\GlobalSearchResultVO.java
+D:\mind-ai\mind-search-service\src\main\java\com\liu\search\mqListener\ListenDocDelete.java
+D:\mind-ai\mind-search-service\src\main\java\com\liu\search\domain\DTO\GlobalSearchDTO.java
+D:\mind-ai\mind-search-service\src\main\java\com\liu\search\domain\Entity\EsDocument.java
+D:\mind-ai\mind-search-service\src\main\java\com\liu\search\mqListener\ListenDocSave.java
+D:\mind-ai\mind-search-service\src\main\java\com\liu\search\feign\KnowledgeFeignClient.java
+D:\mind-ai\mind-search-service\src\main\java\com\liu\search\SearchApplication.java
+D:\mind-ai\mind-search-service\src\main\java\com\liu\search\domain\DTO\DocSearchDTO.java
+D:\mind-ai\mind-search-service\src\main\java\com\liu\search\Service\Impl\DocumentSearchService.java
+D:\mind-ai\mind-search-service\src\main\java\com\liu\search\config\EsDocumentRepository.java
+D:\mind-ai\mind-search-service\src\main\java\com\liu\search\domain\VO\EsDocumentVO.java
+D:\mind-ai\mind-search-service\src\main\java\com\liu\search\config\RabbitConfig.java
+D:\mind-ai\mind-search-service\src\main\java\com\liu\search\domain\VO\EsDocumentSearchVO.java
+D:\mind-ai\mind-search-service\src\main\java\com\liu\search\Service\IDocumentSearchService.java

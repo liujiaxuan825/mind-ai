@@ -1,6 +1,9 @@
 package com.liu.common.aop;
 
 import com.liu.common.aop.config.CacheContextHolder;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -9,27 +12,53 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Aspect
 @Component
 public class CacheMonitorAspect {
 
-    private final Map<String, CacheMonitorBO> monitorDataMap = new ConcurrentHashMap<>();
+    private final MeterRegistry meterRegistry;
+    private final ConcurrentHashMap<String, CacheMetrics> metricsMap = new ConcurrentHashMap<>();
 
-    //避免高并发不停创建对象
-    private CacheMonitorBO creatCacheMonitorBO(String cacheName) {
-        CacheMonitorBO monitorBO = monitorDataMap.get(cacheName);
-        if (monitorBO != null) {
-            return monitorBO;
+    public CacheMonitorAspect(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+    }
+
+    private static class CacheMetrics {
+        Counter hitCounter;
+        Counter missCounter;
+        Counter exceptionCounter;
+        Counter totalCounter;
+        Timer timer;
+
+        CacheMetrics(MeterRegistry registry, String cacheName) {
+            this.hitCounter = Counter.builder("cache_hit_total")
+                    .tag("cache_name", cacheName)
+                    .description("缓存命中次数")
+                    .register(registry);
+            this.missCounter = Counter.builder("cache_miss_total")
+                    .tag("cache_name", cacheName)
+                    .description("缓存未命中次数")
+                    .register(registry);
+            this.exceptionCounter = Counter.builder("cache_exception_total")
+                    .tag("cache_name", cacheName)
+                    .description("缓存异常次数")
+                    .register(registry);
+            this.totalCounter = Counter.builder("cache_invoke_total")
+                    .tag("cache_name", cacheName)
+                    .description("缓存调用总次数")
+                    .register(registry);
+            this.timer = Timer.builder("cache_cost_time")
+                    .tag("cache_name", cacheName)
+                    .description("缓存调用耗时")
+                    .register(registry);
         }
-        synchronized (monitorDataMap) {
-            monitorBO = new CacheMonitorBO();
-            monitorBO.setCacheName(cacheName);
-            monitorDataMap.put(cacheName, monitorBO);
-        }
-        return monitorBO;
+    }
+
+    private CacheMetrics getOrCreateMetrics(String cacheName) {
+        return metricsMap.computeIfAbsent(cacheName, name -> new CacheMetrics(meterRegistry, name));
     }
 
     @Pointcut("@annotation(com.liu.common.aop.CacheMonitor)")
@@ -47,41 +76,35 @@ public class CacheMonitorAspect {
         if (!enabled) {
             return joinPoint.proceed();
         }
+
         String cacheName = annotation.cacheName();
-        CacheMonitorBO monitorBO = creatCacheMonitorBO(cacheName);
+        CacheMetrics metrics = getOrCreateMetrics(cacheName);
         long start = System.currentTimeMillis();
+
         try {
-
             Object result = joinPoint.proceed();
-
 
             Boolean isHit = CacheContextHolder.getCacheHit();
             Boolean isExp = CacheContextHolder.getCacheException();
-            if (Boolean.TRUE.equals(isHit)){
-                monitorBO.getHitCount().incrementAndGet();//命中了
+
+            metrics.totalCounter.increment();
+            if (Boolean.TRUE.equals(isHit)) {
+                metrics.hitCounter.increment();
             } else {
-                monitorBO.getMissCount().incrementAndGet();//未命中
+                metrics.missCounter.increment();
             }
-            if (Boolean.TRUE.equals(isExp)){
-                monitorBO.getExceptionCount().incrementAndGet();//异常了
+            if (Boolean.TRUE.equals(isExp)) {
+                metrics.exceptionCounter.increment();
             }
+
             return result;
         } catch (Throwable e) {
-            monitorBO.getExceptionCount().incrementAndGet();
-            throw new RuntimeException(e);
+            metrics.exceptionCounter.increment();
+            throw e;
         } finally {
-            long end = System.currentTimeMillis();
-            long costTime = end - start;
-            monitorBO.getTotalInvokeCount().incrementAndGet();
-            monitorBO.getTotalCostTime().addAndGet(costTime);
-            if (costTime > monitorBO.getMaxCostTime().get()) {
-                monitorBO.getMaxCostTime().set(costTime);
-            }
-            if (costTime < monitorBO.getMinCostTime().get()) {
-                monitorBO.getMinCostTime().set(costTime);
-            }
+            long costTime = System.currentTimeMillis() - start;
+            metrics.timer.record(costTime, TimeUnit.MILLISECONDS);
             CacheContextHolder.clear();
         }
-
     }
 }

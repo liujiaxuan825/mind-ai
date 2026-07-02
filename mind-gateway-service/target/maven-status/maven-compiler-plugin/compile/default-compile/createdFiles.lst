@@ -1,0 +1,7 @@
+com\liu\gateway\AuthFilter.class
+com\liu\gateway\config\JwtProperties.class
+com\liu\gateway\config\TokenBlacklistService.class
+com\liu\gateway\config\TokenBlacklistServiceImpl.class
+com\liu\gateway\config\JwtUtils.class
+com\liu\gateway\GatewayApplication.class
+com\liu\gateway\config\RedisConfig.class

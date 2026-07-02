@@ -2,7 +2,11 @@ package com.liu.ai.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.liu.ai.common.Result;
 import com.liu.ai.domain.entity.ChatHistory;
+import com.liu.ai.domain.vo.ChatHistoryVO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -14,4 +18,5 @@ import com.liu.ai.domain.entity.ChatHistory;
  */
 public interface IMindChatHistoryService extends IService<ChatHistory> {
 
+    Result<List<ChatHistoryVO>> getChatHistory(String memory);
 }

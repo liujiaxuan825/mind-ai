@@ -18,32 +18,26 @@
     </properties>
 
     <dependencies>
+        <!-- JWT -->
         <dependency>
-            <groupId>com.yourname</groupId>
-            <artifactId>mind-common</artifactId>
-            <exclusions>
-                <!-- 关键：排除web，网关绝不能要 -->
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-web</artifactId>
-                </exclusion>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <scope>runtime</scope>
+        </dependency>
 
-                <exclusion>
-                    <groupId>com.baomidou</groupId>
-                    <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
-                </exclusion>
-
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-jdbc</artifactId>
-                </exclusion>
-
-                <exclusion>
-                    <groupId>com.mysql</groupId>
-                    <artifactId>mysql-connector-j</artifactId>
-                </exclusion>
-            </exclusions>
-            <version>1.0.0-SNAPSHOT</version>
+        <!-- Redis -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
 
@@ -56,6 +50,17 @@
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-bootstrap</artifactId>
+            <version>4.0.3</version>
         </dependency>
 
         <dependency>
@@ -79,6 +84,7 @@
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+
     </dependencies>
     <build>
         <plugins>

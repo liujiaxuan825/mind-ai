@@ -49,23 +49,33 @@
         <caffeine.version>3.1.8</caffeine.version>
         <!-- 熔断降级 -->
         <sentinel.version>1.8.6</sentinel.version>
-        <!-- AI相关 -->
-        <langchain4j.version>0.34.0</langchain4j.version>
-        <langchain4j-open-ai.version>1.3.0</langchain4j-open-ai.version>
-        <langchain4j-milvus.version>0.35.0</langchain4j-milvus.version>
-        <milvus-sdk.version>2.4.4</milvus-sdk.version>
         <!-- 搜索 -->
         <elasticsearch.version>8.12.2</elasticsearch.version>
-
         <!-- Spring Cloud Alibaba -->
         <spring-cloud-alibaba.version>2023.0.1.0</spring-cloud-alibaba.version>
         <spring-cloud.version>2023.0.1</spring-cloud.version>
     </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis-spring</artifactId>
+            <version>3.0.5</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-commons</artifactId>
+        </dependency>
+    </dependencies>
 
     <!-- 模块定义 -->
     <modules>
         <module>mind-common</module>
-<!--        <module>mind-cloud-starter</module>-->
+        <!--        <module>mind-cloud-starter</module>-->
         <module>mind-user-service</module>
         <module>mind-file-service</module>
         <module>mind-ai-service</module>
@@ -85,7 +95,7 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            
+
             <!-- Spring Cloud BOM -->
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
@@ -215,51 +225,12 @@
                 <artifactId>sentinel-core</artifactId>
                 <version>${sentinel.version}</version>
             </dependency>
-            <!-- LangChain4j -->
-            <dependency>
-                <groupId>dev.langchain4j</groupId>
-                <artifactId>langchain4j</artifactId>
-                <version>${langchain4j.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.langchain4j</groupId>
-                <artifactId>langchain4j-open-ai</artifactId>
-                <version>${langchain4j-open-ai.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.langchain4j</groupId>
-                <artifactId>langchain4j-milvus</artifactId>
-                <version>${langchain4j-milvus.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.langchain4j</groupId>
-                <artifactId>langchain4j-easy-rag</artifactId>
-                <version>1.3.0-beta9</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.langchain4j</groupId>
-                <artifactId>langchain4j-cohere</artifactId>
-                <version>0.36.2</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.langchain4j</groupId>
-                <artifactId>langchain4j-embeddings-all-minilm-l6-v2</artifactId>
-                <version>${langchain4j-milvus.version}</version>
-            </dependency>
-            <!-- Milvus -->
-            <dependency>
-                <groupId>io.milvus</groupId>
-                <artifactId>milvus-sdk-java</artifactId>
-                <version>${milvus-sdk.version}</version>
-            </dependency>
             <!-- Elasticsearch -->
             <dependency>
                 <groupId>co.elastic.clients</groupId>
                 <artifactId>elasticsearch-java</artifactId>
                 <version>${elasticsearch.version}</version>
             </dependency>
-
-
         </dependencies>
     </dependencyManagement>
 

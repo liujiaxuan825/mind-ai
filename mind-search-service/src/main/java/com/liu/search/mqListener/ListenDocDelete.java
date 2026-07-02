@@ -1,7 +1,7 @@
 package com.liu.search.mqListener;
 
 import com.liu.common.common.constant.MqConstant;
-import com.liu.file.domain.Entity.Document;
+import com.liu.common.common.domain.DocumentMqMsgDTO;
 import com.liu.search.config.EsDocumentRepository;
 import com.rabbitmq.client.Channel;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ public class ListenDocDelete {
     private final EsDocumentRepository esDocumentRepository;
 
     @RabbitListener(queues = MqConstant.QUEUE_DOCUMENT_ES_DELETE)
-    public void listenDocumentEs(Document documentRecord, Channel channel, Message message) throws IOException {
+    public void listenDocumentEs(DocumentMqMsgDTO documentRecord, Channel channel, Message message) throws IOException {
         long tag = message.getMessageProperties().getDeliveryTag();
         log.info("收到删除文档消息: {}", documentRecord);
         try {

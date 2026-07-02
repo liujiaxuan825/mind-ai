@@ -2,11 +2,8 @@ package com.liu.search.domain.Entity;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
-import org.springframework.data.elasticsearch.annotations.Setting;
-import java.time.LocalDateTime;
+import org.springframework.data.elasticsearch.annotations.*;
+import java.time.LocalDate;
 
 /**
  * Elasticsearch 文档实体类
@@ -53,16 +50,18 @@ public class EsDocument {
     private Long knowledgeId;
 
     /**
-     *创建时间
+     * 创建时间
      */
-    @Field(type = FieldType.Date)
-    private LocalDateTime createTime;
+    @Field(type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd")
+    private LocalDate createTime;
 
     /**
-     *最近一次更新时间
+     * 最近一次更新时间
      */
-    @Field(type = FieldType.Date)
-    private LocalDateTime updateTime;
+    @Field(type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd")
+    private LocalDate updateTime;
+
+
 
     /**
      * ai分析出的文章的大纲

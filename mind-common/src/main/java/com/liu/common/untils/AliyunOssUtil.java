@@ -1,14 +1,15 @@
 package com.liu.common.untils;
 
 import com.aliyun.oss.ClientException;
+import com.aliyun.oss.HttpMethod;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSException;
-import com.aliyun.oss.model.ObjectMetadata;
-import com.aliyun.oss.model.PutObjectRequest;
+import com.aliyun.oss.model.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,6 +18,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -26,6 +29,7 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 @ConditionalOnBean(OSS.class)
+@Lazy
 public class AliyunOssUtil {
     @Value("${aliyun.oss.endpoint}")
     private String endpoint;
@@ -37,7 +41,6 @@ public class AliyunOssUtil {
     private String urlPrefix;
 
     private final OSS ossClient;
-
 
 
     /**
@@ -102,7 +105,15 @@ public class AliyunOssUtil {
             return;
         }
         ossClient.deleteObject(bucketName, objectName);
+    }
 
+    public void deleteFiles(List<String> keys) {
+        if (keys == null || keys.isEmpty()) {
+            return;
+        }
+        DeleteObjectsRequest deleteObjectsRequest = new DeleteObjectsRequest(bucketName);
+        deleteObjectsRequest.setKeys(keys);
+        ossClient.deleteObjects(deleteObjectsRequest);
     }
 
     /**
@@ -197,4 +208,57 @@ public class AliyunOssUtil {
             return -1;
         }
     }
+
+    /**
+     * 初始化分块上传，返回uploadId
+     * @param objectKey
+     * @return uploadId
+     */
+    public String initiateMultipartUpload(String objectKey) {
+        InitiateMultipartUploadRequest request = new InitiateMultipartUploadRequest(bucketName, objectKey);
+        return ossClient.initiateMultipartUpload(request).getUploadId();
+    }
+
+    /**
+     * 生成分块上传URL
+     * @param objectKey
+     * @param uploadId
+     * @param chunkNumber
+     * @return url
+     */
+    public String generateChunkUploadUrl(String objectKey, String uploadId, Integer chunkNumber) {
+        Date expiration = new Date(System.currentTimeMillis() + 3600 * 1000);
+        GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucketName, objectKey, HttpMethod.PUT);
+        request.setExpiration(expiration);
+        request.addQueryParameter("uploadId", uploadId);
+        request.addQueryParameter("chunkNumber", String.valueOf(chunkNumber));
+        return ossClient.generatePresignedUrl(request).toString();
+    }
+
+    /**
+     *
+     * @param objectKey
+     * @param uploadId
+     * @return
+     */
+    public List<PartSummary> listUploadedParts(String objectKey, String uploadId) {
+        ListPartsRequest request = new ListPartsRequest(bucketName, objectKey, uploadId);
+        return ossClient.listParts(request).getParts();
+    }
+
+    /**
+     * 合并所有分片
+     * @param objectKey
+     * @param uploadId
+     * @param partETags
+     */
+    public void completeMultipartUpload(String objectKey, String uploadId, List<PartETag> partETags) {
+        CompleteMultipartUploadRequest request = new CompleteMultipartUploadRequest(bucketName, objectKey, uploadId, partETags);
+        ossClient.completeMultipartUpload(request);
+    }
+
+    public boolean isObjectExist(String objectKey) {
+        return ossClient.doesObjectExist(bucketName, objectKey);
+    }
+
 }

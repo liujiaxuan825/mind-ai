@@ -1,6 +1,5 @@
 package com.liu.search.domain.VO;
 
-import com.liu.file.domain.enumsPack.DocumentStatus;
 import lombok.Data;
 
 @Data
@@ -20,10 +19,6 @@ public class EsDocumentVO {
      */
     private Long fileSize;
 
-    /**
-     * 文件此时的状态
-     */
-    private DocumentStatus status;
 
     /**
      * 摘要，状态正确展示内容的一部分，错误是显示错误信息，其他状态不展示

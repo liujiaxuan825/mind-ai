@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: mind-gateway-service
+  profiles:
+    active: dev
+  cloud:
+    nacos:
+      server-addr: 127.0.0.1:8848
+      config:
+        namespace: public
+        group: DEFAULT_GROUP
+        file-extension: yaml
+        import: optional:nacos:${spring.application.name}-${spring.profiles.active}.yaml
+      discovery:
+        namespace: public
+        group: DEFAULT_GROUP

@@ -29,6 +29,7 @@ public class ModelConfig {
                 .apiKey("sk-1054e5fe95734a879f619f5059a1867e")
                 .baseUrl("https://dashscope.aliyuncs.com/compatible-mode/v1")
                 .modelName("text-embedding-v3")
+                .maxSegmentsPerBatch(10)
                 .build();
     }
 

@@ -3,6 +3,7 @@ package com.liu.search.Service.Impl;
 import cn.hutool.core.bean.BeanUtil;
 import co.elastic.clients.elasticsearch._types.aggregations.*;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
+import com.liu.common.common.domain.ComKnowledgeVO;
 import com.liu.common.untils.UserContext;
 import com.liu.search.Service.IDocumentSearchService;
 import com.liu.search.domain.DTO.DocSearchDTO;
@@ -11,7 +12,6 @@ import com.liu.search.domain.Entity.EsDocument;
 import com.liu.search.domain.VO.EsDocumentSearchVO;
 import com.liu.search.domain.VO.EsDocumentVO;
 import com.liu.search.domain.VO.GlobalSearchResultVO;
-import com.liu.file.domain.VO.KnowledgeVO;
 import com.liu.common.common.Result;
 import com.liu.common.common.page.PageRequestDTO;
 import com.liu.common.common.page.PageResultVO;
@@ -84,7 +84,7 @@ public class DocumentSearchService implements IDocumentSearchService {
         List<GlobalSearchResultVO> voList = array.stream().map(b -> {
             GlobalSearchResultVO vo = new GlobalSearchResultVO();
             vo.setRelatedCount(b.docCount());
-            KnowledgeVO know = new KnowledgeVO();
+            ComKnowledgeVO know = new ComKnowledgeVO();
             know.setId(b.key());
             vo.setKnowledgeVO(know);
             return vo;
@@ -95,10 +95,10 @@ public class DocumentSearchService implements IDocumentSearchService {
         if (kdIdList.isEmpty()) {
             return Result.success(new PageResultVO<>());
         }
-        List<KnowledgeVO> knowledgeList = knowledgeFeignClient.list(kdIdList);
-        Map<Long, KnowledgeVO> collect = knowledgeList.stream()
+        List<ComKnowledgeVO> knowledgeList = knowledgeFeignClient.list(kdIdList);
+        Map<Long, ComKnowledgeVO> collect = knowledgeList.stream()
                 .collect(Collectors.toMap(
-                        KnowledgeVO::getId,
+                        ComKnowledgeVO::getId,
                         knowledgeVO -> knowledgeVO
                 ));
 
@@ -228,10 +228,10 @@ public class DocumentSearchService implements IDocumentSearchService {
         return Result.success(pageResult);
     }
 
-    private List<GlobalSearchResultVO> combineCountAndInf(Map<Long, KnowledgeVO> map, List<GlobalSearchResultVO> voList) {
+    private List<GlobalSearchResultVO> combineCountAndInf(Map<Long, ComKnowledgeVO> map, List<GlobalSearchResultVO> voList) {
         for (GlobalSearchResultVO vo : voList) {
             Long id = vo.getKnowledgeVO().getId();
-            KnowledgeVO knowledge = map.get(id);
+            ComKnowledgeVO knowledge = map.get(id);
             if (knowledge != null) {
                 vo.setKnowledgeVO(knowledge);
             }

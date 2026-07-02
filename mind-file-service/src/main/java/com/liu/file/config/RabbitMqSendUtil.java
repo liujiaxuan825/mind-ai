@@ -11,9 +11,8 @@ import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.core.ReturnedMessage;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.AbstractJavaTypeMapper;
 import org.springframework.stereotype.Component;
-
-import java.util.UUID;
 
 @Component
 @Slf4j
@@ -53,7 +52,11 @@ public class RabbitMqSendUtil implements RabbitTemplate.ConfirmCallback, RabbitT
     public <T> void sendMsg(String exchange, String routingKey, T t, CorrelationData correlationData) {
         try {
             Message message = MessageBuilder.withBody(objectMapper.writeValueAsBytes(t))
+                    .setMessageId(correlationData.getId())
                     .setDeliveryMode(MessageDeliveryMode.PERSISTENT)
+                    .setContentType("application/json")
+                    .setHeader(AbstractJavaTypeMapper.DEFAULT_CLASSID_FIELD_NAME,
+                            t.getClass().getName())
                     .build();
             rabbitTemplate.send(exchange, routingKey, message, correlationData);
             log.info("[✅ RabbitMQ] 消息发送成功 | 交换机:{} | 路由键:{}", exchange, routingKey);

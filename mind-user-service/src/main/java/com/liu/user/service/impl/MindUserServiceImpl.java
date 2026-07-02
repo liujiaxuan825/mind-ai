@@ -1,5 +1,7 @@
 package com.liu.user.service.impl;
 
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.liu.common.untils.UserContext;
 import com.liu.user.domain.dto.UserLoginDTO;
@@ -40,6 +42,7 @@ public class MindUserServiceImpl extends ServiceImpl<MindUserMapper, User> imple
     private final TokenBlacklistService tokenBlacklistService;
 
     @Override
+    @SentinelResource(value = "user:login", blockHandler = "loginBlock")
     public Result<UserLoginVO> login(UserLoginDTO userLoginDTO) {
         String name = userLoginDTO.getUsername();
         String password = userLoginDTO.getPassword();
@@ -74,7 +77,13 @@ public class MindUserServiceImpl extends ServiceImpl<MindUserMapper, User> imple
         return Result.success(userLoginVO);
     }
 
+    public Result<UserLoginVO> loginBlock(UserLoginDTO userLoginDTO, BlockException e) throws BlockException {
+        log.warn("[Sentinel] 登录接口被拦截 → 规则：{}", e.getRule());
+        throw e;
+    }
+
     @Override
+    @SentinelResource(value = "user:register", blockHandler = "registerBlock")
     public Result<Void> register(UserRegisterDTO userRegisterDTO) {
         if (!userRegisterDTO.getPassword().equals(userRegisterDTO.getPasswordAgain())) {
             throw new BusinessException("两次输入密码不一致！");
@@ -93,6 +102,11 @@ public class MindUserServiceImpl extends ServiceImpl<MindUserMapper, User> imple
         mindUser.setPassword(MD5Password);
         save(mindUser);
         return Result.success();
+    }
+
+    public Result<Void> registerBlock(UserRegisterDTO userRegisterDTO, BlockException e) throws BlockException {
+        log.warn("[Sentinel] 注册接口被拦截 → 规则：{}", e.getRule());
+        throw e;
     }
 
     @Override

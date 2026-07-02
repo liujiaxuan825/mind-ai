@@ -6,16 +6,16 @@ import com.liu.search.domain.DTO.GlobalSearchDTO;
 import com.liu.search.domain.VO.EsDocumentSearchVO;
 import com.liu.search.domain.VO.GlobalSearchResultVO;
 import com.liu.common.common.Result;
-import com.liu.common.common.page.PageRequestDTO;
 import com.liu.common.common.page.PageResultVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.web.bind.annotation.*;
-
 import java.io.IOException;
 
 @RestController
 @RequestMapping("/search")
 @RequiredArgsConstructor
+@RefreshScope
 public class DocumentSearchController {
 
     private final IDocumentSearchService documentSearchService;

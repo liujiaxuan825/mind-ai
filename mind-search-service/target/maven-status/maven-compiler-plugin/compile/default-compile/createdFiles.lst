@@ -1,0 +1,15 @@
+com\liu\search\mqListener\ListenDocDelete.class
+com\liu\search\domain\VO\EsDocumentVO.class
+com\liu\search\config\RabbitConfig.class
+com\liu\search\Service\IDocumentSearchService.class
+com\liu\search\controller\DocumentSearchController.class
+com\liu\search\feign\KnowledgeFeignClient.class
+com\liu\search\domain\VO\EsDocumentSearchVO.class
+com\liu\search\domain\DTO\DocSearchDTO.class
+com\liu\search\domain\Entity\EsDocument.class
+com\liu\search\SearchApplication.class
+com\liu\search\Service\Impl\DocumentSearchService.class
+com\liu\search\domain\DTO\GlobalSearchDTO.class
+com\liu\search\config\EsDocumentRepository.class
+com\liu\search\domain\VO\GlobalSearchResultVO.class
+com\liu\search\mqListener\ListenDocSave.class
