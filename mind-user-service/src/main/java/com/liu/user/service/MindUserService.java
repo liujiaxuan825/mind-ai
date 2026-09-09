@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.liu.user.domain.vo.UserLoginVO;
 import com.liu.user.domain.vo.UserVO;
 
+import java.util.List;
+
 
 
 /**
@@ -25,4 +27,6 @@ public interface MindUserService extends IService<User> {
 
 
     Result<Void> logout();
+
+    Result<List<UserVO>> listUsers();
 }

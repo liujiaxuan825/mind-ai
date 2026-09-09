@@ -1,6 +1,8 @@
 package com.liu.user.controller;
 
+import cn.dev33.satoken.annotation.SaCheckRole;
 import com.liu.common.common.Result;
+import com.liu.user.common.RbacConstant;
 import com.liu.user.domain.dto.RoleDTO;
 import com.liu.user.domain.vo.RoleVO;
 import com.liu.user.service.MindRoleService;
@@ -10,8 +12,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/role")
+@RequestMapping("/user/role")
 @RequiredArgsConstructor
+@SaCheckRole(RbacConstant.ADMIN_ROLE_CODE)
 public class RoleController {
 
     private final MindRoleService mindRoleService;

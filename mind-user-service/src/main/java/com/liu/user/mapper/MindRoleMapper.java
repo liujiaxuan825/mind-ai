@@ -11,6 +11,6 @@ import java.util.List;
 @Mapper
 public interface MindRoleMapper extends BaseMapper<Role> {
 
-    @Select("SELECT r.* FROM mind_role r INNER JOIN mind_user_role ur ON r.id = ur.role_id WHERE ur.user_id = #{userId}")
+    @Select("SELECT r.* FROM mind_role r INNER JOIN mind_user_role ur ON r.id = ur.role_id WHERE ur.user_id = #{userId} AND r.status = 1")
     List<Role> selectRolesByUserId(@Param("userId") Long userId);
 }

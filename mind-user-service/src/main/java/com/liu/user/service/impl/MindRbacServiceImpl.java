@@ -14,7 +14,7 @@ import com.liu.user.domain.entity.User;
 import com.liu.user.domain.entity.UserRole;
 import com.liu.user.domain.vo.PermissionVO;
 import com.liu.user.domain.vo.RoleVO;
-import com.liu.user.domain.vo.UserInfo;
+import com.liu.common.common.domain.UserInfo;
 import com.liu.user.mapper.MindPermissionMapper;
 import com.liu.user.mapper.MindRoleMapper;
 import com.liu.user.mapper.MindRolePermissionMapper;

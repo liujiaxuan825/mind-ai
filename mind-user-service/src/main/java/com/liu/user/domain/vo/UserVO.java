@@ -1,11 +1,10 @@
 package com.liu.user.domain.vo;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.liu.user.enumsPack.UserStatus;
 import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class UserVO {
@@ -50,4 +49,9 @@ public class UserVO {
      *
      */
     private LocalDateTime createTime;
+
+    /**
+     * 当前用户拥有的角色编码，前端用是否包含 ADMIN 控制菜单。
+     */
+    private List<String> roleCodes;
 }

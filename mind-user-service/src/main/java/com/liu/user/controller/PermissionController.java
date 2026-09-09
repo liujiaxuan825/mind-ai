@@ -1,6 +1,8 @@
 package com.liu.user.controller;
 
+import cn.dev33.satoken.annotation.SaCheckRole;
 import com.liu.common.common.Result;
+import com.liu.user.common.RbacConstant;
 import com.liu.user.domain.dto.PermissionDTO;
 import com.liu.user.domain.vo.PermissionVO;
 import com.liu.user.service.MindPermissionService;
@@ -10,8 +12,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/permission")
+@RequestMapping("/user/permission")
 @RequiredArgsConstructor
+@SaCheckRole(RbacConstant.ADMIN_ROLE_CODE)
 public class PermissionController {
 
     private final MindPermissionService mindPermissionService;

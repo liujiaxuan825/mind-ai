@@ -1,5 +1,6 @@
 package com.liu.user.domain.dto;
 
+
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 

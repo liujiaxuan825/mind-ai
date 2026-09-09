@@ -1,6 +1,8 @@
 package com.liu.user.controller;
 
+import cn.dev33.satoken.annotation.SaCheckRole;
 import com.liu.common.common.Result;
+import com.liu.user.common.RbacConstant;
 import com.liu.user.domain.dto.AssignPermissionDTO;
 import com.liu.user.domain.dto.AssignRoleDTO;
 import com.liu.user.domain.vo.PermissionVO;
@@ -12,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/rbac")
+@RequestMapping("/user/rbac")
 @RequiredArgsConstructor
 public class RbacController {
 
@@ -21,6 +23,7 @@ public class RbacController {
     /**
      * 给用户分配角色（覆盖写入）
      */
+    @SaCheckRole(RbacConstant.ADMIN_ROLE_CODE)
     @PostMapping("/assign-roles")
     public Result<Void> assignRoles(@RequestBody AssignRoleDTO dto) {
         return mindRbacService.assignRoles(dto);
@@ -29,16 +32,19 @@ public class RbacController {
     /**
      * 给角色分配权限（覆盖写入）
      */
+    @SaCheckRole(RbacConstant.ADMIN_ROLE_CODE)
     @PostMapping("/assign-permissions")
     public Result<Void> assignPermissions(@RequestBody AssignPermissionDTO dto) {
         return mindRbacService.assignPermissions(dto);
     }
 
+    @SaCheckRole(RbacConstant.ADMIN_ROLE_CODE)
     @GetMapping("/user/{userId}/roles")
     public Result<List<RoleVO>> listRolesByUserId(@PathVariable Long userId) {
         return mindRbacService.listRolesByUserId(userId);
     }
 
+    @SaCheckRole(RbacConstant.ADMIN_ROLE_CODE)
     @GetMapping("/role/{roleId}/permissions")
     public Result<List<PermissionVO>> listPermissionsByRoleId(@PathVariable Long roleId) {
         return mindRbacService.listPermissionsByRoleId(roleId);

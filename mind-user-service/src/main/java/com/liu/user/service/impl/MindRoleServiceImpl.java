@@ -6,10 +6,12 @@ import com.liu.common.common.Result;
 import com.liu.common.exception.BusinessException;
 import com.liu.user.domain.dto.RoleDTO;
 import com.liu.user.domain.entity.Role;
+import com.liu.user.domain.entity.RoleMenu;
 import com.liu.user.domain.entity.RolePermission;
 import com.liu.user.domain.entity.UserRole;
 import com.liu.user.domain.vo.RoleVO;
 import com.liu.user.mapper.MindRoleMapper;
+import com.liu.user.mapper.MindRoleMenuMapper;
 import com.liu.user.mapper.MindRolePermissionMapper;
 import com.liu.user.mapper.MindUserRoleMapper;
 import com.liu.user.service.MindRoleService;
@@ -29,6 +31,7 @@ public class MindRoleServiceImpl extends ServiceImpl<MindRoleMapper, Role> imple
 
     private final MindUserRoleMapper mindUserRoleMapper;
     private final MindRolePermissionMapper mindRolePermissionMapper;
+    private final MindRoleMenuMapper mindRoleMenuMapper;
 
     @Override
     public Result<Void> add(RoleDTO roleDTO) {
@@ -93,6 +96,8 @@ public class MindRoleServiceImpl extends ServiceImpl<MindRoleMapper, Role> imple
         }
         mindUserRoleMapper.delete(new LambdaQueryWrapper<UserRole>().eq(UserRole::getRoleId, id));
         mindRolePermissionMapper.delete(new LambdaQueryWrapper<RolePermission>().eq(RolePermission::getRoleId, id));
+        // BUG 3 修复：删除角色时同步清理 mind_role_menu 关联表，避免脏数据残留
+        mindRoleMenuMapper.delete(new LambdaQueryWrapper<RoleMenu>().eq(RoleMenu::getRoleId, id));
         removeById(id);
         return Result.success();
     }

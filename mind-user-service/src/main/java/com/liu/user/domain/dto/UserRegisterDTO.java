@@ -12,7 +12,7 @@ public class UserRegisterDTO {
     @NotBlank(message = "密码不能为空！")
     private String password;
 
-    @NotBlank(message = "密码不能为空！")
+    @NotBlank(message = "确认密码不能为空！")
     private String passwordAgain;
 
     private String email;
